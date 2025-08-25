@@ -1,0 +1,17 @@
+/* styles.css */
+/* 카드 오른쪽 위에 표시되는 다운로드 버튼 스타일 */
+.filterest-download-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 9999;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 8px;
+    font-size: 12px;
+    cursor: pointer;
+    backdrop-filter: saturate(180%) blur(6px);
+}
+.filterest-download-btn:hover { background: rgba(0,0,0,0.8); }

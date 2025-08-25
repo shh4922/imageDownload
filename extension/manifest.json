@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Filterest - Pinterest Original Image Saver",
+  "version": "0.1.0",
+  "description": "Pinterest 페이지에서 원본(최대 해상도) 이미지를 빠르게 저장합니다.",
+  "permissions": ["downloads", "storage", "scripting", "activeTab"],
+  "host_permissions": [
+    "https://www.pinterest.com/*",
+    "https://*.pinterest.com/*",
+    "https://*.pinimg.com/*"
+  ],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_popup": "popup.html" },
+  "content_scripts": [
+    {
+      "matches": ["https://www.pinterest.com/*", "https://*.pinterest.com/*"],
+      "js": ["contents.js"],
+      "css": ["styles.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}
