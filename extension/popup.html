@@ -1,18 +1,42 @@
 <!doctype html>
-<html>
+<html lang="ko">
 <head>
   <meta charset="utf-8" />
-  <title>Filterest</title>
-  <style>
-      body { font-family: sans-serif; width: 240px; margin: 12px; }
-      button { width: 100%; padding: 10px; }
-      small { color: #666; display: block; margin-top: 8px; }
-  </style>
+  <title>Filterest Tool</title>
+  <link rel="stylesheet" href="popup.css" />
 </head>
+
 <body>
-<!-- 버튼 클릭 시 현재 보이는 이미지를 일괄 저장 -->
-<button id="bulk">현재 화면 보이는 이미지 일괄 저장(실험)</button>
-<small>단축키: Shift + D</small>
+<header class="popup-header">
+  <div class="title">📌 Filterest</div>
+
+  <nav class="tabs">
+    <button class="tab active" data-target="board">Board</button>
+    <button class="tab" data-target="pins">Pins</button>
+    <button class="tab" data-target="settings">Settings</button>
+  </nav>
+
+  <div class="actions">
+    <button class="upgrade">Upgrade to Pro</button>
+    <button class="close-btn" title="Close">✕</button>
+  </div>
+</header>
+
+<main class="popup-content">
+  <section id="board" class="tab-content active">
+    <h2>Board Images</h2>
+    <div id="boardImages"></div>
+  </section>
+
+  <section id="pins" class="tab-content">
+    <h2>Saved Pins</h2>
+  </section>
+
+  <section id="settings" class="tab-content">
+    <h2>Settings</h2>
+  </section>
+</main>
+
 <script src="popup.js"></script>
 </body>
 </html>

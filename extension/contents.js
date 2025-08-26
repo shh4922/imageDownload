@@ -5,6 +5,21 @@ const BTN_CLASS = 'filterest-download-btn'; // 다운로드 버튼 클래스
 const SEEN_ATTR = 'data-filterest-seen';    // 중복 삽입 방지를 위한 속성
 let observing = false;
 
+
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    if (msg?.type === "CHECK_BOARD_PAGE") {
+        sendResponse({ isBoard: isBoardPage() });
+    }
+
+    if (msg?.type === "GET_BOARD_IMAGES") {
+        if (!isBoardPage()) {
+            return sendResponse({ images: [] });
+        }
+        sendResponse({ images: collectBoardImages() });
+    }
+});
+
+
 init();
 
 function init() {
@@ -13,11 +28,32 @@ function init() {
     if (!observing) startObserver();
 
     // 단축키 등록 (Shift+D → 보이는 이미지 일괄 저장)
-    document.addEventListener('keydown', (e) => {
-        if (e.shiftKey && (e.key === 'D' || e.key === 'd')) {
-            bulkDownloadVisible();
-        }
-    });
+    // document.addEventListener('keydown', (e) => {
+    //     if (e.shiftKey && (e.key === 'D' || e.key === 'd')) {
+    //         bulkDownloadVisible();
+    //     }
+    // });
+}
+
+function isBoardPage() {
+    const parts = location.pathname.split('/').filter(Boolean);
+    // 최소한 2개 이상 segment 있으면 보드라고 간주
+    // return parts.length >= 2;
+    return true
+}
+
+
+function collectBoardImages() {
+    const images = Array.from(document.querySelectorAll("img"))
+        .map(img => {
+            if (img.srcset) {
+                const parts = img.srcset.split(',').map(s => s.trim().split(' '));
+                return parts[parts.length - 1][0];
+            }
+            return img.src;
+        })
+        .filter(src => src.includes("pinimg.com"));
+    return [...new Set(images)];
 }
 
 // DOM 변경 감시 (무한스크롤 대응)

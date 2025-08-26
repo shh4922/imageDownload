@@ -10,7 +10,7 @@
     "https://*.pinimg.com/*"
   ],
   "background": { "service_worker": "background.js" },
-  "action": { "default_popup": "popup.html" },
+  "action": {},
   "content_scripts": [
     {
       "matches": ["https://www.pinterest.com/*", "https://*.pinterest.com/*"],

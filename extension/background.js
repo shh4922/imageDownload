@@ -25,6 +25,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     }
 });
 
+chrome.action.onClicked.addListener(() => {
+    chrome.windows.create({
+        url: "popup.html",
+        type: "popup",
+        width: 1600,
+        height: 900
+    });
+});
+
 // 파일명에서 허용되지 않는 문자 제거
 function sanitizeFilename(name) {
     if (!name) return '';
