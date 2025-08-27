@@ -20,6 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function checkAndLoadBoard() {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        console.log(tabs)
         chrome.tabs.sendMessage(tabs[0].id, { type: "CHECK_BOARD_PAGE" }, (res) => {
             console.log(res)
             if (!res?.isBoard) {
