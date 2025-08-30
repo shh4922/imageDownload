@@ -1,174 +1,171 @@
-// content.js
-// Pinterest 페이지에 버튼을 삽입하고, 이미지 URL을 추출하여 다운로드 요청을 background.js에 전달
-
-const BTN_CLASS = 'filterest-download-btn'; // 다운로드 버튼 클래스
-const SEEN_ATTR = 'data-filterest-seen';    // 중복 삽입 방지를 위한 속성
-let observing = false;
 
 
-chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-    if (msg?.type === "CHECK_BOARD_PAGE") {
-        sendResponse({ isBoard: isBoardPage() });
-    }
+// 페이지 위에 패널을 꽂고, 그 자리에서 스캔/다운로드까지 수행
+if (!window.__filterest_injected) {
+    window.__filterest_injected = true;
+    mountIframePanel()
+    bindHotkey(); // Alt+F 토글
+}
 
-    if (msg?.type === "GET_BOARD_IMAGES") {
-        if (!isBoardPage()) {
-            return sendResponse({ images: [] });
-        }
-        sendResponse({ images: collectBoardImages() });
+
+chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+    if (msg?.type === 'TOGGLE_PANEL') {
+        console.log('[CS] TOGGLE_PANEL received');
+        togglePanel();
+        sendResponse?.({ ok: true });
     }
 });
 
-
-init();
-
-function init() {
-    // 최초 실행 시 버튼 주입 + DOM 변경 감시 시작
-    injectButtons();
-    if (!observing) startObserver();
-
-    // 단축키 등록 (Shift+D → 보이는 이미지 일괄 저장)
-    // document.addEventListener('keydown', (e) => {
-    //     if (e.shiftKey && (e.key === 'D' || e.key === 'd')) {
-    //         bulkDownloadVisible();
-    //     }
-    // });
+function togglePanel() {
+    const overlay = document.getElementById('filterest-overlay');
+    if (overlay) {
+        closePanel();
+    } else {
+        mountIframePanel();
+    }
 }
 
+
+function mountIframePanel() {
+    // 스크롤 잠금
+    const prevOverflow = document.documentElement.style.overflow;
+    document.documentElement.dataset.filterestOverflow = prevOverflow || '';
+    document.documentElement.style.overflow = 'hidden';
+
+    // ====== Overlay (배경) ======
+    const overlay = document.createElement('div');
+    overlay.id = 'filterest-overlay';
+    Object.assign(overlay.style, {
+        position: 'fixed',
+        inset: '0',
+        zIndex: '2147483646',                 // iframe 바로 아래
+        background: 'rgba(0,0,0,0.45)',       // 어둡게
+        backdropFilter: 'blur(6px) saturate(0.9)', // 배경 흐림
+        WebkitBackdropFilter: 'blur(6px) saturate(0.9)',
+        // 노이즈 (CSS only, 가벼운 패턴)
+        backgroundImage:
+            'radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),' +
+            'radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px)',
+        backgroundSize: '3px 3px, 5px 5px',
+        backgroundPosition: '0 0, 1px 1px',
+    });
+
+    // 오버레이 클릭하면 닫기 (패널 외부 클릭 닫힘)
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closePanel();
+    });
+
+    // ====== Iframe (패널) ======
+    const iframe = document.createElement('iframe');
+    iframe.id = 'filterest-panel-iframe';
+    iframe.src = chrome.runtime.getURL('pannel/pannel.html'); // ← 폴더명이 panel이면 'panel/panel.html'
+    Object.assign(iframe.style, {
+        position: 'fixed',
+        top: '50%', left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: '900px',   // 원하는 중앙 크기
+        height: '600px',
+        maxWidth: 'calc(100vw - 40px)',
+        maxHeight: 'calc(100vh - 40px)',
+        border: '0',
+        borderRadius: '14px',
+        boxShadow: '0 20px 60px rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.06) inset',
+        zIndex: '2147483647',
+        background: 'transparent',
+    });
+
+    // ESC 키로 닫기
+    const onKey = (e) => {
+        if (e.key === 'Escape') closePanel();
+    };
+    window.addEventListener('keydown', onKey);
+
+    // 닫기/정리 함수를 전역에 저장
+    window.__filterest_close = () => {
+        window.removeEventListener('keydown', onKey);
+        overlay.remove();
+        const prev = document.documentElement.dataset.filterestOverflow || '';
+        document.documentElement.style.overflow = prev;
+        delete window.__filterest_close;
+    };
+
+    document.documentElement.appendChild(overlay);
+    document.documentElement.appendChild(iframe);
+    window.__filterest_panel = true;
+}
+
+function closePanel() {
+    document.getElementById('filterest-panel-iframe')?.remove();
+    document.getElementById('filterest-overlay')?.remove();
+    const prev = document.documentElement.dataset.filterestOverflow || '';
+    document.documentElement.style.overflow = prev;
+    window.__filterest_panel = false;
+    if (typeof window.__filterest_close === 'function') window.__filterest_close();
+}
+
+// Alt+F 토글
+function bindHotkey() {
+    window.addEventListener('keydown', (e) => {
+        if (e.altKey && (e.key === 'f' || e.key === 'F')) {
+            if (window.__filterest_injected) {
+                document.getElementById('filterest-host')?.remove();
+                window.__filterest_injected = false;
+            } else {
+                window.__filterest_injected = true;
+                mountIframePanel();
+            }
+        }
+    }, { capture: true });
+}
+
+// ===== 이미지 수집 유틸 =====
 function isBoardPage() {
-    const parts = location.pathname.split('/').filter(Boolean);
-    // 최소한 2개 이상 segment 있으면 보드라고 간주
-    // return parts.length >= 2;
-    return true
+    const p = location.pathname.replace(/\/+$/, '');
+    if (/^\/pin\//.test(p)) return false; // 핀 상세 제외
+    return true; // MVP: 나머지는 보드로 간주
 }
 
+function bestFromSrcset(img) {
+    const set = img.getAttribute('srcset');
+    if (!set) return img.currentSrc || img.src;
+    let best = img.currentSrc || img.src, wmax = 0;
+    for (const part of set.split(',').map(s => s.trim())) {
+        const [u, wtxt] = part.split(' ');
+        const w = parseInt(wtxt);
+        if (w && w > wmax) { wmax = w; best = u; }
+    }
+    try { return new URL(best, location.href).toString(); } catch { return best; }
+}
 
 function collectBoardImages() {
-    const images = Array.from(document.querySelectorAll("img"))
-        .map(img => {
-            if (img.srcset) {
-                const parts = img.srcset.split(',').map(s => s.trim().split(' '));
-                return parts[parts.length - 1][0];
-            }
-            return img.src;
-        })
-        .filter(src => src.includes("pinimg.com"));
-    return [...new Set(images)];
+    // 보드가 아니어도 일단 pinimg 이미지 수집
+    const imgs = [...document.querySelectorAll('img')].filter(
+        (img) => /pinimg\.com/.test(img.src) || /pinimg\.com/.test(img.srcset || '')
+    );
+    // 최대 해상도 추정
+    const urls = imgs.map(bestFromSrcset).filter(Boolean);
+
+    // dedupe
+    return [...new Set(urls)];
 }
 
-// DOM 변경 감시 (무한스크롤 대응)
-function startObserver() {
-    observing = true;
-    const obs = new MutationObserver(() => injectButtons());
-    obs.observe(document.body, { subtree: true, childList: true });
-}
+// ===== 도우미 =====
+function escapeHtml(s){ return String(s).replace(/[&<>\"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])) }
 
-// 이미지마다 버튼 삽입
-function injectButtons() {
-    const imgs = Array.from(document.querySelectorAll('img'))
-        .filter(img => !img.hasAttribute(SEEN_ATTR)) // 아직 처리 안 된 이미지
-        .filter(img => /pinimg\.com/.test(img.src) || /pinimg\.com/.test(img.srcset || ''));
-
-    for (const img of imgs) {
-        img.setAttribute(SEEN_ATTR, '1');
-
-        // 카드 컨테이너 탐색
-        let card = img.closest('div[role="listitem"], div[data-test-id], div[data-grid-item]') || img.parentElement;
-        if (!card) card = img.parentElement;
-
-        // 버튼 중복 삽입 방지
-        if (card && card.querySelector(`.${BTN_CLASS}`)) continue;
-
-        // 다운로드 버튼 생성
-        const btn = document.createElement('button');
-        btn.className = BTN_CLASS;
-        btn.title = 'Download original';
-        btn.textContent = '↓';
-        btn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            const bestUrl = getBestImageUrl(img); // 가장 큰 해상도 URL 추출
-            const name = buildName(card, img);    // 파일명 생성
-            triggerDownload(bestUrl, name);       // 다운로드 실행
-        });
-
-        // 카드 오른쪽 위에 버튼 삽입
-        (card || img.parentElement).style.position ||= 'relative';
-        (card || img.parentElement).appendChild(btn);
-    }
-}
-
-// srcset에서 최대 해상도 URL 선택
-function getBestImageUrl(img) {
-    const set = img.getAttribute('srcset');
-    if (set) {
-        const parts = set.split(',').map(s => s.trim());
-        let best = { url: img.src, w: 0 };
-        for (const p of parts) {
-            const [u, wtxt] = p.split(' ');
-            const w = parseInt(wtxt);
-            if (!Number.isNaN(w) && w > best.w) best = { url: u, w };
-        }
-        if (best.url) return absolutize(best.url);
-    }
-    return absolutize(img.src);
-}
-
-// 상대경로를 절대경로로 변환
-function absolutize(url) {
-    try {
-        return new URL(url, location.href).toString();
-    } catch {
-        return url;
-    }
-}
-
-// 파일명 생성 규칙
-function buildName(card, img) {
-    const t = new Date();
-    const ts = `${t.getFullYear()}${String(t.getMonth()+1).padStart(2,'0')}${String(t.getDate()).padStart(2,'0')}`+
-        `_${String(t.getHours()).padStart(2,'0')}${String(t.getMinutes()).padStart(2,'0')}${String(t.getSeconds()).padStart(2,'0')}`;
-    const alt = (img.getAttribute('alt') || '').trim().slice(0, 60).replace(/\s+/g, '_');
-    const label = alt || (card?.getAttribute('aria-label') || '').trim().slice(0,60).replace(/\s+/g,'_') || 'pin';
-    const ext = guessExtFromUrl(img.src) || 'jpg';
-    return `${ts}_${label}_${Math.random().toString(36).slice(2,6)}.${ext}`;
-}
-
-// URL에서 확장자 추측
-function guessExtFromUrl(url) {
-    const u = url.split('?')[0].toLowerCase();
-    if (u.endsWith('.jpg') || u.endsWith('.jpeg')) return 'jpg';
-    if (u.endsWith('.png')) return 'png';
-    if (u.endsWith('.webp')) return 'webp';
-    return 'jpg';
-}
-
-// background.js에 다운로드 요청
-async function triggerDownload(url, filename) {
-    chrome.runtime.sendMessage({
-        type: 'DOWNLOAD_ORIGINAL',
-        payload: { url, filename, saveAs: false }
-    }, (res) => {
-        if (!res?.ok) {
-            console.warn('Download failed:', res?.error);
-        }
+function makeDraggable(panel, handle) {
+    let sx, sy, sl, st, dragging = false;
+    handle.addEventListener('mousedown', (e) => {
+        dragging = true; sx = e.clientX; sy = e.clientY;
+        const rect = panel.getBoundingClientRect(); sl = rect.left; st = rect.top;
+        e.preventDefault();
     });
-}
-
-// 현재 화면에 보이는 이미지들을 일괄 다운로드
-function bulkDownloadVisible() {
-    const viewport = document.documentElement.clientHeight;
-    const imgs = Array.from(document.querySelectorAll('img'))
-        .filter(img => /pinimg\.com/.test(img.src) || /pinimg\.com/.test(img.srcset || ''))
-        .filter(img => {
-            const r = img.getBoundingClientRect();
-            return r.top < viewport && r.bottom > 0; // 뷰포트 안에 보이는 이미지만
-        });
-
-    // 100개까지, 250ms 간격으로 다운로드
-    imgs.slice(0, 100).forEach((img, i) => {
-        const url = getBestImageUrl(img);
-        const name = buildName(img.closest('[role="listitem"]') || img.parentElement, img);
-        setTimeout(() => triggerDownload(url, name), i * 250);
+    window.addEventListener('mousemove', (e) => {
+        if (!dragging) return;
+        const dx = e.clientX - sx, dy = e.clientY - sy;
+        panel.style.left = (sl + dx) + 'px';
+        panel.style.top  = (st + dy) + 'px';
+        panel.style.right = 'auto'; // 고정 해제
+        panel.style.position = 'fixed';
     });
+    window.addEventListener('mouseup', () => dragging = false);
 }

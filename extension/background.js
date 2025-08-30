@@ -6,31 +6,42 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         const { url, filename, saveAs } = msg.payload || {};
         if (!url) return sendResponse({ ok: false, error: 'NO_URL' });
 
-        // chrome.downloads.download API 사용
-        chrome.downloads.download(
-            {
-                url,
-                filename: sanitizeFilename(filename) || undefined, // 파일명 정리
-                saveAs: Boolean(saveAs)                            // true면 저장창 띄움
-            },
-            (downloadId) => {
-                if (chrome.runtime.lastError) {
-                    return sendResponse({ ok: false, error: chrome.runtime.lastError.message });
-                }
-                sendResponse({ ok: true, id: downloadId });
+        chrome.downloads.download({ url, filename, saveAs: !!saveAs }, (id) => {
+            if (chrome.runtime.lastError) {
+                return sendResponse({ ok: false, error: chrome.runtime.lastError.message });
             }
-        );
+            sendResponse({ ok: true, id });
+        });
+        return true; // async 응답
+    }
 
-        return true; // 비동기 응답을 위해 true 반환
+    if (msg?.type === 'DOWNLOAD_BULK') {
+        const { urls = [], prefix = 'pin' } = msg.payload || {};
+        let i = 0;
+        const next = () => {
+            if (i >= urls.length) return sendResponse({ ok: true, count: urls.length });
+            const u = urls[i++];
+            const name = `${prefix}_${String(i).padStart(3, '0')}.jpg`;
+            chrome.downloads.download({ url: u, filename: name }, () => {
+                // 에러가 나도 일단 계속 진행
+                next();
+            });
+        };
+        next();
+        return true;
     }
 });
 
-chrome.action.onClicked.addListener(() => {
-    chrome.windows.create({
-        url: "popup.html",
-        type: "popup",
-        width: 1600,
-        height: 900
+chrome.action.onClicked.addListener((tab) => {
+    console.log(tab?.id)
+    if (!tab?.id) return;
+    chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_PANEL' }, (res) => {
+        if (chrome.runtime.lastError) {
+            // 여기서 "Receiving end does not exist" 나오면 content script가 안 붙은 상태
+            console.warn('[BG] sendMessage error:', chrome.runtime.lastError.message);
+            return;
+        }
+        console.log('[BG] toggle response:', res);
     });
 });
 
