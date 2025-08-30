@@ -18,5 +18,17 @@
       "css": ["styles.css"],
       "run_at": "document_idle"
     }
+  ],
+
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "pannel/pannel.html",
+        "pannel/pannel.css",
+        "pannel/pannel.js",
+        "assets/*"
+      ],
+      "matches": ["https://*.pinterest.com/*", "https://*.pinterest.co.kr/*"]
+    }
   ]
 }
