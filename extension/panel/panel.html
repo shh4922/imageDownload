@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <title>Filterest Panel</title>
-  <link rel="stylesheet" href="pannel.css" />
+  <link rel="stylesheet" href="panel.css" />
 </head>
 <body>
 <header class="popup-header">
@@ -17,7 +17,7 @@
 
   <div class="actions">
     <button class="upgrade">Upgrade to Pro</button>
-    <button class="close-btn" title="Close">✕</button>
+    <button class="close-btn" title="Close" id="btn-close">✕</button>
   </div>
 </header>
 
@@ -25,7 +25,13 @@
 <main class="popup-content">
   <section id="board" class="tab-content active">
     <h2>Board Images</h2>
-    <div id="boardImages"></div>
+    <div>
+      <h1>boardTitle</h1>
+      <button id="btn-getImageList">getBoardImageList</button>
+      <p id="status">sdfsdf</p>
+      <progress id="prog" max="100" value="0" style="width: 240px;"></progress>
+      <div id="pin-list"></div>
+    </div>
   </section>
 
   <section id="pins" class="tab-content">
@@ -37,6 +43,10 @@
   </section>
 </main>
 
-<script src="pannel.js"></script>
+<script src="panel.js"></script>
+
+<!-- axios -->
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
 </body>
 </html>

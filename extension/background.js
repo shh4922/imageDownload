@@ -1,39 +1,78 @@
 // background.js
-// content.js에서 보낸 메시지를 받아 실제 다운로드를 실행하는 부분
 
-chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-    if (msg?.type === 'DOWNLOAD_ORIGINAL') {
-        const { url, filename, saveAs } = msg.payload || {};
-        if (!url) return sendResponse({ ok: false, error: 'NO_URL' });
+// 탭별 핀 캐시 (선택 사항: 패널이 먼저 열려도 이전 데이터 보여주기용)
+const pinsByTab = new Map(); // tabId -> [{id,url}, ...]
 
-        chrome.downloads.download({ url, filename, saveAs: !!saveAs }, (id) => {
-            if (chrome.runtime.lastError) {
-                return sendResponse({ ok: false, error: chrome.runtime.lastError.message });
+// 연결된 panel 포트 목록 (여러 개 열릴 수도 있음)
+const panelPorts = []; // [{ port, tabId }]
+
+
+// panel.html과의 포트 연결 관리
+chrome.runtime.onConnect.addListener((port) => {
+    if (port.name !== "panel") return;
+
+    const ctx = { port, tabId: null }; // 이 패널이 구독 중인 탭 id
+    panelPorts.push(ctx);
+
+    // panel에서 특정 탭을 구독하겠다고 알림
+    port.onMessage.addListener((msg) => {
+        if (msg.type === "PANEL_SUBSCRIBE" && typeof msg.tabId === "number") {
+            ctx.tabId = msg.tabId;
+
+            // 캐시가 있으면 즉시 보내기
+            const cached = pinsByTab.get(ctx.tabId) || [];
+            port.postMessage({ type: "PINS_COLLECTED", pins: cached, tabId: ctx.tabId });
+        }
+    });
+
+    // 패널이 닫히면 정리
+    port.onDisconnect.addListener(() => {
+        const i = panelPorts.indexOf(ctx);
+        if (i >= 0) panelPorts.splice(i, 1);
+    });
+});
+
+
+chrome.runtime.onMessage.addListener((msg, sender) => {
+    const tabId = sender.tab?.id;
+    if (!tabId) return;
+
+    // 핀 수집 완료
+    if (msg.type === "PINS_COLLECTED") {
+        const pins = Array.isArray(msg.pins) ? msg.pins : [];
+        pinsByTab.set(tabId, pins); // 캐시 갱신
+
+        // 이 탭을 구독 중인 panel들에게만 전달
+        for (const p of panelPorts) {
+            if (p.tabId === tabId) {
+                p.port.postMessage({ type: "PINS_COLLECTED", pins, tabId });
             }
-            sendResponse({ ok: true, id });
-        });
-        return true; // async 응답
+        }
     }
 
-    if (msg?.type === 'DOWNLOAD_BULK') {
-        const { urls = [], prefix = 'pin' } = msg.payload || {};
-        let i = 0;
-        const next = () => {
-            if (i >= urls.length) return sendResponse({ ok: true, count: urls.length });
-            const u = urls[i++];
-            const name = `${prefix}_${String(i).padStart(3, '0')}.jpg`;
-            chrome.downloads.download({ url: u, filename: name }, () => {
-                // 에러가 나도 일단 계속 진행
-                next();
-            });
-        };
-        next();
-        return true;
+    // 진행 상황
+    if (msg.type === "PINS_PROGRESS") {
+        for (const p of panelPorts) {
+            if (p.tabId === tabId) {
+                p.port.postMessage({
+                    type: "PINS_PROGRESS",
+                    percent: msg.percent,
+                    tabId
+                });
+            }
+        }
     }
 });
 
+
+
+
+/**
+ * 확장 프로그램 on/off
+ * 확장 프로그램 실행버튼을 눌렀을때 이벤트
+ */
 chrome.action.onClicked.addListener((tab) => {
-    console.log(tab?.id)
+    console.log("background Action run!!")
     if (!tab?.id) return;
     chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_PANEL' }, (res) => {
         if (chrome.runtime.lastError) {
@@ -44,6 +83,8 @@ chrome.action.onClicked.addListener((tab) => {
         console.log('[BG] toggle response:', res);
     });
 });
+
+
 
 // 파일명에서 허용되지 않는 문자 제거
 function sanitizeFilename(name) {

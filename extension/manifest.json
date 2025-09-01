@@ -23,9 +23,10 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "pannel/pannel.html",
-        "pannel/pannel.css",
-        "pannel/pannel.js",
+        "panel/panel.html",
+        "panel/panel.css",
+        "panel/panel.js",
+        "injected.js",
         "assets/*"
       ],
       "matches": ["https://*.pinterest.com/*", "https://*.pinterest.co.kr/*"]

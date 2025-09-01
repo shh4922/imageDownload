@@ -1,20 +1,83 @@
+/**
+ * 실제 핀터레스트 웹 브라우저 위에서 돌아가는 Js
+ * api콜 요청할때 쿠키랑 헤더 담아야해서 여기서 요청보내야함.
+ */
 
 
 // 페이지 위에 패널을 꽂고, 그 자리에서 스캔/다운로드까지 수행
 if (!window.__filterest_injected) {
     window.__filterest_injected = true;
     mountIframePanel()
-    bindHotkey(); // Alt+F 토글
 }
 
 
+
+/**
+ * Close 이벤트 등록
+ */
+window.addEventListener('message', (e) => {
+    if (!String(e.origin).startsWith('chrome-extension://')) return;
+    if (e.data?.type === 'PANEL_CLOSE') {
+        closePanel();
+    }
+});
+
+
+/**
+ * 이미지 데이터 Fetch
+ */
+window.addEventListener('message', (e)=> {
+    if (e.data?.type === "PANEL_SCAN") {
+        console.log("[CS] 패널에서 스캔 요청 받음");
+        injectScriptFile("injected.js");
+    }
+})
+
+/**
+ * 데이터 패치 완료후 이벤트 전달
+ */
+window.addEventListener("message", (event) => {
+    // 같은 프레임에서 올라온 것만 처리
+    if (event.source !== window) return;
+
+    if (event.data?.type === "PINS_COLLECTED") {
+        console.log("event submit ",event.data.pins)
+        chrome.runtime.sendMessage({
+            type: "PINS_COLLECTED",
+            pins: event.data.pins
+        });
+    }
+
+    // ---- 진행 상황 업데이트 ----
+    if (event.data?.type === "PINS_PROGRESS") {
+        chrome.runtime.sendMessage({
+            type: "PINS_PROGRESS",
+            percent: event.data.percent
+        });
+    }
+});
+
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+    console.log(msg,_sender,sendResponse)
     if (msg?.type === 'TOGGLE_PANEL') {
         console.log('[CS] TOGGLE_PANEL received');
         togglePanel();
         sendResponse?.({ ok: true });
     }
 });
+
+
+// 페이지에 함수 주입
+function injectScriptFile(file) {
+    const script = document.createElement("script");
+    script.src = chrome.runtime.getURL(file);
+    script.onload = () => {
+        console.log("[CS] injected.js 로드 완료");
+        script.remove();
+    };
+    (document.head || document.documentElement).appendChild(script);
+}
+
 
 function togglePanel() {
     const overlay = document.getElementById('filterest-overlay');
@@ -58,7 +121,7 @@ function mountIframePanel() {
     // ====== Iframe (패널) ======
     const iframe = document.createElement('iframe');
     iframe.id = 'filterest-panel-iframe';
-    iframe.src = chrome.runtime.getURL('pannel/pannel.html'); // ← 폴더명이 panel이면 'panel/panel.html'
+    iframe.src = chrome.runtime.getURL('panel/panel.html'); // ← 폴더명이 panel이면 'panel/panel.html'
     Object.assign(iframe.style, {
         position: 'fixed',
         top: '50%', left: '50%',
@@ -101,71 +164,4 @@ function closePanel() {
     document.documentElement.style.overflow = prev;
     window.__filterest_panel = false;
     if (typeof window.__filterest_close === 'function') window.__filterest_close();
-}
-
-// Alt+F 토글
-function bindHotkey() {
-    window.addEventListener('keydown', (e) => {
-        if (e.altKey && (e.key === 'f' || e.key === 'F')) {
-            if (window.__filterest_injected) {
-                document.getElementById('filterest-host')?.remove();
-                window.__filterest_injected = false;
-            } else {
-                window.__filterest_injected = true;
-                mountIframePanel();
-            }
-        }
-    }, { capture: true });
-}
-
-// ===== 이미지 수집 유틸 =====
-function isBoardPage() {
-    const p = location.pathname.replace(/\/+$/, '');
-    if (/^\/pin\//.test(p)) return false; // 핀 상세 제외
-    return true; // MVP: 나머지는 보드로 간주
-}
-
-function bestFromSrcset(img) {
-    const set = img.getAttribute('srcset');
-    if (!set) return img.currentSrc || img.src;
-    let best = img.currentSrc || img.src, wmax = 0;
-    for (const part of set.split(',').map(s => s.trim())) {
-        const [u, wtxt] = part.split(' ');
-        const w = parseInt(wtxt);
-        if (w && w > wmax) { wmax = w; best = u; }
-    }
-    try { return new URL(best, location.href).toString(); } catch { return best; }
-}
-
-function collectBoardImages() {
-    // 보드가 아니어도 일단 pinimg 이미지 수집
-    const imgs = [...document.querySelectorAll('img')].filter(
-        (img) => /pinimg\.com/.test(img.src) || /pinimg\.com/.test(img.srcset || '')
-    );
-    // 최대 해상도 추정
-    const urls = imgs.map(bestFromSrcset).filter(Boolean);
-
-    // dedupe
-    return [...new Set(urls)];
-}
-
-// ===== 도우미 =====
-function escapeHtml(s){ return String(s).replace(/[&<>\"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])) }
-
-function makeDraggable(panel, handle) {
-    let sx, sy, sl, st, dragging = false;
-    handle.addEventListener('mousedown', (e) => {
-        dragging = true; sx = e.clientX; sy = e.clientY;
-        const rect = panel.getBoundingClientRect(); sl = rect.left; st = rect.top;
-        e.preventDefault();
-    });
-    window.addEventListener('mousemove', (e) => {
-        if (!dragging) return;
-        const dx = e.clientX - sx, dy = e.clientY - sy;
-        panel.style.left = (sl + dx) + 'px';
-        panel.style.top  = (st + dy) + 'px';
-        panel.style.right = 'auto'; // 고정 해제
-        panel.style.position = 'fixed';
-    });
-    window.addEventListener('mouseup', () => dragging = false);
 }
