@@ -1,7 +1,12 @@
+/**
+ * 확장 전용 페이지의 스크립트
+ * 브라우저 탭에 들어가있지 않아서 tabId를 모름
+ * 그래서 미리 연결해두고 tabId를 구독하고있음
+ */
 
 // 1. background 와 포트 연결
 const port = chrome.runtime.connect({ name: "panel" });
-
+let tabId = null
 
 // 2) DOM 참조
 const listEl = document.getElementById("pin-list");
@@ -20,8 +25,11 @@ async function subscribeCurrentTab() {
         statusEl.textContent = "활성 탭을 찾지 못했어요.";
         return;
     }
-    // background에: 이 탭 데이터 주세요
+
+    // background.js 와 현재 브라우저 탭 연결
     port.postMessage({ type: "PANEL_SUBSCRIBE", tabId: tab.id });
+    tabId = tab.id
+
     statusEl.textContent = `탭 #${tab.id} 구독 중…`;
 }
 
@@ -109,8 +117,13 @@ function initCloseButton() {
     const closeBtn = document.getElementById('btn-close') || document.querySelector('.close-btn');
     if (closeBtn) {
         closeBtn.addEventListener('click', () => {
-            console.log("cilck close")
-            window.parent.postMessage({ type: 'PANEL_CLOSE' }, '*');
+            if(!tabId) return
+            chrome.runtime.sendMessage({
+                type:"PANEL_CLOSE",
+                tabId
+            })
+            // console.log("cilck close")
+            // window.parent.postMessage({ type: 'PANEL_CLOSE' }, '*');
         });
     }
 }
@@ -123,13 +136,4 @@ function initImageList() {
         window.parent.postMessage({ type: "PANEL_SCAN" }, "*");
     })
 }
-
-
-// function initImagePanel() {
-//     port.onMessage.addListener((msg) => {
-//         if (msg.type === "PINS_COLLECTED") {
-//             renderPins(msg.pins);
-//         }
-//     });
-// }
 

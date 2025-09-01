@@ -1,8 +1,15 @@
 /**
- * 실제 핀터레스트 웹 브라우저 위에서 돌아가는 Js
- * api콜 요청할때 쿠키랑 헤더 담아야해서 여기서 요청보내야함.
+ * 브라우저 탭에 주입된 스크립트
  */
 
+/**
+ * window.addEventListener()
+ * injected.js에서 이벤트 수신하거나, 보낼때 사용
+ *
+ * background.js 와 통신시, chrome.runtime.sendMessage()..
+ *
+ *
+ */
 
 // 페이지 위에 패널을 꽂고, 그 자리에서 스캔/다운로드까지 수행
 if (!window.__filterest_injected) {
@@ -10,17 +17,7 @@ if (!window.__filterest_injected) {
     mountIframePanel()
 }
 
-
-
-/**
- * Close 이벤트 등록
- */
-window.addEventListener('message', (e) => {
-    if (!String(e.origin).startsWith('chrome-extension://')) return;
-    if (e.data?.type === 'PANEL_CLOSE') {
-        closePanel();
-    }
-});
+onAddChromeRuntimeMessage()
 
 
 /**
@@ -57,15 +54,23 @@ window.addEventListener("message", (event) => {
     }
 });
 
-chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-    console.log(msg,_sender,sendResponse)
-    if (msg?.type === 'TOGGLE_PANEL') {
-        console.log('[CS] TOGGLE_PANEL received');
-        togglePanel();
-        sendResponse?.({ ok: true });
-    }
-});
 
+//
+function onAddChromeRuntimeMessage() {
+    chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+        switch (msg.type) {
+            case 'TOGGLE_PANEL':    // 확장 프로그램 on/off
+                togglePanel();
+                sendResponse?.({ ok: true });
+                break
+            case 'PANEL_CLOSE':     // 확장프로그램 종료
+                closePanel();
+                break
+            default:
+                break
+        }
+    });
+}
 
 // 페이지에 함수 주입
 function injectScriptFile(file) {
