@@ -65,15 +65,18 @@ function onConnect() {
     });
 }
 
+/**
+ * contents.js 에서 수신한 메시지 panel.js로 전송
+ */
 function onAddRuntimeEvent() {
-    // contents.js에서 메시지를 받았을때
     chrome.runtime.onMessage.addListener((msg, sender) => {
+        console.log("onRecive in background",msg, sender)
         const tabId = sender.tab?.id;
         if (!tabId) return;
 
         switch (msg.type) {
             case "PINS_COLLECTED":
-                sendPinsData(tabId)
+                sendPinsData(tabId, msg.pins)
                 break
             case "PINS_PROGRESS":
                 sendLoadingPercent()
@@ -81,20 +84,26 @@ function onAddRuntimeEvent() {
             case "PANEL_CLOSE":
                 sendPanelClose(tabId)
                 break
+            case "SLUG_NOT_FOUND":
+                const findTab = findTabByTabId(tabId)
+                if(!findTab) return
+                findTab.port.sendMessage(tabId, { type: "SLUG_NOT_FOUND" })
+                break
             default:
                 break
         }
     });
 }
 
-function sendPinsData(tabId) {
-    const pins = Array.isArray(msg.pins) ? msg.pins : [];
-    pinsByTab.set(tabId, pins); // 캐시 갱신
+function sendPinsData(tabId, pins=[]) {
+    const imageList = Array.isArray(pins) ? pins : [];
+    pinsByTab.set(tabId, imageList); // 캐시 갱신
 
-    // const findTab = findTabByTabId(tabId)
-    // if(!findTab) return
+    const findTab = findTabByTabId(tabId)
+    if(!findTab) return
 
-    findTab.port.postMessage({ type: "PINS_COLLECTED", pins, tabId });
+
+    findTab.port.postMessage({ type: "PINS_COLLECTED", pins:imageList, tabId });
 }
 
 function sendLoadingPercent(tabId) {
@@ -116,7 +125,9 @@ function sendPanelClose(tabId) {
 }
 
 function findTabByTabId(tabId) {
-    return  panelPorts.find((port)=>{
+    const findTab = panelPorts.find((port)=>{
         return port.tabId === tabId
     })
+    console.log(findTab)
+    return findTab
 }

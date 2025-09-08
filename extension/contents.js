@@ -17,9 +17,9 @@ if (!window.__filterest_injected) {
     mountIframePanel()
 }
 
+injectionScriptInit()
+
 onAddChromeRuntimeMessage()
-
-
 /**
  * 이미지 데이터 Fetch
  */
@@ -30,29 +30,43 @@ window.addEventListener('message', (e)=> {
     }
 })
 
-/**
- * 데이터 패치 완료후 이벤트 전달
- */
-window.addEventListener("message", (event) => {
-    // 같은 프레임에서 올라온 것만 처리
-    if (event.source !== window) return;
 
-    if (event.data?.type === "PINS_COLLECTED") {
-        console.log("event submit ",event.data.pins)
-        chrome.runtime.sendMessage({
-            type: "PINS_COLLECTED",
-            pins: event.data.pins
-        });
-    }
+function injectionScriptInit() {
+    /**
+     * 이미지 데이터 Fetch
+     */
+    window.addEventListener('message', (event)=> {
+        console.info("event ", event)
+        if (event.source !== window) return;
+        switch (event.data.type) {
+            // case "PANEL_SCAN":
+            //     console.log("[CS] 패널에서 스캔 요청 받음");
+            //     injectScriptFile("injected.js");
+            //     break;
 
-    // ---- 진행 상황 업데이트 ----
-    if (event.data?.type === "PINS_PROGRESS") {
-        chrome.runtime.sendMessage({
-            type: "PINS_PROGRESS",
-            percent: event.data.percent
-        });
-    }
-});
+            case "PINS_COLLECTED":
+                chrome.runtime.sendMessage({
+                    type: "PINS_COLLECTED",
+                    pins: event.data.pins
+                });
+                break;
+
+            case "PINS_PROGRESS":
+                chrome.runtime.sendMessage({
+                    type: "PINS_PROGRESS",
+                    percent: event.data.percent
+                });
+                break
+            case "SLUG_NOT_FOUND":
+                chrome.runtime.sendMessage({
+                    type: "SLUG_NOT_FOUND",
+                });
+
+            default:
+                break;
+        }
+    })
+}
 
 
 //

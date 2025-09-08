@@ -31,20 +31,46 @@ async function subscribeCurrentTab() {
     tabId = tab.id
 
     statusEl.textContent = `탭 #${tab.id} 구독 중…`;
+
+    const url = new URL(tab.url);
+
+    // /{username}/{board-slug}/ 형태
+    const parts = url.pathname.split("/").filter(Boolean);
+    if (parts.length < 2) {
+        statusEl.textContent = `슬러그 없음`;
+        console.log("슬러그 없음")
+        return
+    }
+
+    const [username, slug] = parts;
+    if (!username || !slug) {
+        statusEl.textContent = `슬러그 없음`;
+        console.log("슬러그 없음")
+        return
+    }
 }
+
 
 port.onMessage.addListener((msg) => {
     if (!msg || !msg.type) return;
 
+    console.log("panel.js onRecive",msg)
     if (msg.type === "PINS_COLLECTED") {
         renderPins(msg.pins || []);
-        statusEl.textContent = ''
+        // statusEl.textContent = ''
+        return;
     }
 
     if (msg.type === "PINS_PROGRESS") {
         const pct = Math.min(100, Math.max(0, Number(msg.percent) || 0));
         statusEl.textContent = `탭 #${msg.tabId} 수집: ${pct}%${pct === 100 ? ' (완료)' : ''}`;
         if (progEl) progEl.value = pct;
+        return;
+    }
+
+    if(msg.type === "SLUG_NOT_FOUND") {
+        statusEl.textContent = "그룹을 찾지 못함ㅋㅋ"
+        return;
     }
 });
 

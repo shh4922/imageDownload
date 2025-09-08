@@ -76,50 +76,97 @@
      * @param {string} slug - 보드 slug
      */
     async function getBoardInfo(username, slug) {
-        const boardUrl = `/${username}/${slug}/`;
+        // conso
+        // URL 세그먼트는 반드시 인코딩
+        const safeUser = encodeURIComponent(username);
+        const safeSlug = encodeURIComponent(slug);
+
+        // 헤더에도 ASCII만 써야 하므로 인코딩된 경로 사용
+        const encodedPath = `/${safeUser}/${safeSlug}/`;
+
+        // 쿠키에서 csrftoken 추출 (없어도 동작하도록 방어)
         const csrftoken = document.cookie
             .split("; ")
             .find(row => row.startsWith("csrftoken="))
             ?.split("=")[1];
 
-        const url = `${location.origin}/resource/BoardResource/get/?` +
-            "source_url=" + encodeURIComponent(boardUrl) +
+        // Pinterest 내부 API 패턴 유지하되, 쿼리/소스URL은 인코딩 사용
+        const url =
+            `${location.origin}/resource/BoardResource/get/?` +
+            "source_url=" + encodeURIComponent(encodedPath) +
             "&data=" + encodeURIComponent(JSON.stringify({
-                options: { username, slug, field_set_key: "detailed" },
+                options: { username, slug, field_set_key: "detailed" }, // JSON은 유니코드 OK
                 context: {}
             }));
 
-        const res = await fetch(url, {
-            method: "GET",
-            credentials: "include",
-            headers: {
-                "accept": "application/json, text/javascript, */*; q=0.01",
-                "x-requested-with": "XMLHttpRequest",
-                "x-pinterest-appstate": "active",
-                "x-pinterest-source-url": boardUrl,
-                "x-pinterest-pws-handler": "www/[username]/[slug].js",
-                "x-app-version": "9d30d92",
-                ...(csrftoken ? { "x-csrftoken": csrftoken } : {})
-            }
-        });
+        try {
+            const res = await fetch(url, {
+                method: "GET",
+                credentials: "include",
+                headers: {
+                    "accept": "application/json, text/javascript, */*; q=0.01",
+                    "x-requested-with": "XMLHttpRequest",
+                    "x-pinterest-appstate": "active",
+                    // ⚠️ 헤더는 ASCII만 가능 → 인코딩된 경로 사용
+                    "x-pinterest-source-url": encodedPath,
+                    "x-pinterest-pws-handler": "www/[username]/[slug].js",
+                    "x-app-version": "9d30d92",
+                    ...(csrftoken ? { "x-csrftoken": csrftoken } : {})
+                }
+            });
 
-        if (!res.ok) {
-            console.error("BoardResource 실패:", res.status);
+            if (!res.ok) {
+                console.error("BoardResource 실패:", res.status, await safeText(res));
+                return null;
+            }
+
+            return await res.json();
+        } catch (e) {
+            console.error("BoardResource 요청 에러:", e);
             return null;
         }
-        const json = await res.json();
-        // console.log("boardInfo json", json)
-        // console.log("pin count", json.resource_response.data.pin_count)
-        // json.resource_response.data.pin_count : 이미지 개수. 이거 n개로 나누어서 병렬로 쏘게 하면 더 빠를듯.
-        //     ?.resource_response?.data?.id;
-        return json
+
+        // 일부 서버가 에러 응답에 바이너리/비ASCII를 담을 수 있어 안전하게 읽기
+        async function safeText(r) {
+            try { return await r.text(); } catch { return ""; }
+        }
+    }
+
+    function parsePinterestBoardSlug(urlPath) {
+        try {
+            if (!urlPath) return null;
+
+            // "/duckduckduccoon/3-arcade/" -> ["duckduckduccoon","3-arcade"]
+            const segments = urlPath
+                .split("/")
+                .filter(Boolean) // 빈 문자열 제거
+                .map(seg => {
+                    try { return decodeURIComponent(seg); }
+                    catch { return decodeURI(seg); }
+                });
+
+            if (segments.length < 2) return null;
+
+            const [username, slug] = segments;
+            return [username, slug];
+        } catch (e) {
+            console.warn("parsePinterestBoardSlug error:", e);
+            return null;
+        }
     }
 
     // 4. 보드 핀 긁기
     async function fetchBoardPins() {
         const boardUrl = location.pathname;                                                 // "/duckduckduccoon/3-arcade/"
-        const [userName, slug] = boardUrl.split('/').filter(v => v !== '');    // ""
+        const [userName, slug] = parsePinterestBoardSlug(boardUrl)
+        // const [userName, slug] = boardUrl.split('/').filter(v => v !== '');    // ""
+        if(!slug) {
+            window.postMessage({ type: "SLUG_NOT_FOUND", pins }, "*");
+            return
+        }
 
+        console.log("boardUrl",boardUrl)
+        console.log("userName, slug", userName, slug)
         // 1. boardId 가져오기
         const boardInfoRes = await getBoardInfo(userName, slug);
         const boardId =  boardInfoRes?.resource_response?.data?.id;
@@ -221,6 +268,13 @@
     // if (!ok) {
     //     console.warn("[PAGE] 세션 활성화 실패 → 핀 조회 중단");
     //     return;
+    // }
+
+    // const boardUrl = location.pathname;                                                 // "/duckduckduccoon/3-arcade/"
+    // const [userName, slug] = boardUrl.split('/').filter(v => v !== '');    // ""
+    // if(!slug) {
+    //     window.postMessage({ type: "SLUG_NOT_FOUND", pins }, "*");
+    //     return
     // }
 
     const pins = await fetchBoardPins();
