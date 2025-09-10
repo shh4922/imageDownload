@@ -15,6 +15,21 @@ const statusEl = document.getElementById("status");
 
 const progEl = document.getElementById('prog');
 
+// 패널 최상단에서 1회만 생성해두면 좋아요
+// 1) 전역에 한 번
+const io = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        const img = e.target;
+        // 진입 순간에만 실제 로드
+        img.src = img.dataset.src;
+        io.unobserve(img);
+    }
+}, {
+    root: null,
+    rootMargin: '0px',  // ✅ 과도 프리로드 방지 (필요하면 100~200px로만)
+    threshold: 0.01
+});
 
 
 
@@ -74,25 +89,52 @@ port.onMessage.addListener((msg) => {
     }
 });
 
+// function renderPins(pins) {
+//     listEl.innerHTML = "";
+//     pins.forEach((p) => {
+//         const url = typeof p === "string" ? p : p.url;
+//         const id  = typeof p === "string" ? "" : (p.id ?? "");
+//
+//         const img = document.createElement("img");
+//         img.src = url;
+//         img.alt = id;
+//         img.title = id || url;
+//         img.style.width = "150px";
+//         img.style.margin = "6px";
+//         img.style.borderRadius = "6px";
+//         img.style.border = "1px solid #ddd";
+//
+//         listEl.appendChild(img);
+//     });
+// }
 function renderPins(pins) {
     listEl.innerHTML = "";
+    const frag = document.createDocumentFragment();
+
     pins.forEach((p) => {
         const url = typeof p === "string" ? p : p.url;
         const id  = typeof p === "string" ? "" : (p.id ?? "");
 
         const img = document.createElement("img");
-        img.src = url;
-        img.alt = id;
-        img.title = id || url;
-        img.style.width = "150px";
-        img.style.margin = "6px";
+        img.dataset.src = url;              // ✅ src가 아니라 data-src
+        img.alt = id || "";
+        img.decoding = "async";
+        img.loading = "lazy";               // 브라우저 네이티브 lazy 보조
+        img.fetchPriority = "low";
+        img.style.display = "block";
+        img.style.width = "auto";
+        img.style.height = "auto";
+        img.style.maxWidth = "100%";
+        img.style.maxHeight = "80vh";
         img.style.borderRadius = "6px";
         img.style.border = "1px solid #ddd";
+        img.style.margin = "6px";
 
-        listEl.appendChild(img);
+        frag.appendChild(img);
+        io.observe(img);                    // ✅ 관찰 시작
     });
 
-    // statusEl.textContent = `총 ${pins.length}개 이미지`;
+    listEl.appendChild(frag);
 }
 subscribeCurrentTab(); // 패널 열리면 자동 구독
 

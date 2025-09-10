@@ -1,96 +1,354 @@
-body {
-    font-family: "Segoe UI", sans-serif;
-    width: 100%;  /* background.js에서 창 크기 맞춤 */
-    height: 100%;
+/*body {*/
+/*    font-family: "Segoe UI", sans-serif;*/
+/*    width: 100%;  !* background.js에서 창 크기 맞춤 *!*/
+/*    height: 100%;*/
+/*    margin: 0;*/
+/*    background: white;*/
+/*    color: #333;*/
+/*    display: flex;*/
+/*    flex-direction: column;*/
+/*}*/
+
+/*.popup-header {*/
+/*    display: flex;*/
+/*    align-items: center;*/
+/*    justify-content: space-between;*/
+/*    background: #f5f5f5;*/
+/*    border-bottom: 1px solid #ddd;*/
+/*    padding: 8px 12px;*/
+/*}*/
+
+/*.popup-header .title {*/
+/*    font-weight: bold;*/
+/*    font-size: 16px;*/
+/*}*/
+
+/*.popup-header .tabs {*/
+/*    flex: 1;*/
+/*    display: flex;*/
+/*    justify-content: center;*/
+/*    gap: 8px;*/
+/*}*/
+
+/*.popup-header .tabs .tab {*/
+/*    background: transparent;*/
+/*    border: none;*/
+/*    padding: 6px 12px;*/
+/*    cursor: pointer;*/
+/*    border-radius: 4px;*/
+/*    font-size: 14px;*/
+/*}*/
+
+/*.popup-header .tabs .tab.active {*/
+/*    background: #e60023; !* Pinterest Red *!*/
+/*    color: white;*/
+/*    font-weight: bold;*/
+/*}*/
+
+/*.popup-header .tabs .tab:hover {*/
+/*    background: #f9cdd5; !* 밝은 레드톤 hover *!*/
+/*}*/
+
+/*.popup-header .actions {*/
+/*    display: flex;*/
+/*    align-items: center;*/
+/*    gap: 6px;*/
+/*}*/
+
+/*.popup-header .actions .upgrade {*/
+/*    background: #e60023;*/
+/*    color: white;*/
+/*    border: none;*/
+/*    padding: 6px 10px;*/
+/*    border-radius: 4px;*/
+/*    font-size: 12px;*/
+/*    cursor: pointer;*/
+/*}*/
+
+/*.popup-header .actions .upgrade:hover {*/
+/*    background: #cc0020;*/
+/*}*/
+
+/*.popup-header .actions .close-btn {*/
+/*    background: none;*/
+/*    border: none;*/
+/*    font-size: 18px;*/
+/*    cursor: pointer;*/
+/*    color: #333;*/
+/*}*/
+
+/*.popup-header .actions .close-btn:hover {*/
+/*    color: #e60023;*/
+/*}*/
+
+/*.popup-content {*/
+/*    flex: 1;*/
+/*    padding: 12px;*/
+/*    overflow-y: auto;*/
+/*}*/
+
+/*.tab-content {*/
+/*    display: none;*/
+/*}*/
+
+/*.tab-content.active {*/
+/*    display: block;*/
+/*}*/
+
+/* ===== Reset & Base ===== */
+* { box-sizing: border-box; }
+html, body {
     margin: 0;
-    background: white;
-    color: #333;
-    display: flex;
-    flex-direction: column;
+    padding: 0;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, Arial, sans-serif;
+    color: #222;
+    background: #fff;
+}
+:root{
+    --bg: #ffffff;
+    --fg: #1f2937;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --soft: #f9fafb;
+    --brand: #ef4444;       /* 포인트 색상 */
+    --brand-2: #fb7185;     /* 그라데이션용 */
+    --shadow: 0 4px 14px rgba(0,0,0,.08);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --gap: 12px;
 }
 
-.popup-header {
+@media (prefers-color-scheme: dark) {
+    :root{
+        --bg: #0b0f14;
+        --fg: #e5e7eb;
+        --muted: #9ca3af;
+        --border: #1f2937;
+        --soft: #11161c;
+        --shadow: 0 6px 20px rgba(0,0,0,.35);
+    }
+}
+body { background: var(--bg); color: var(--fg); }
+
+/* ===== Header ===== */
+.popup-header{
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: var(--gap);
+    padding: 12px 14px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.04), transparent), var(--bg);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(6px);
+}
+
+.title{
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: .2px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    background: #f5f5f5;
-    border-bottom: 1px solid #ddd;
-    padding: 8px 12px;
-}
-
-.popup-header .title {
-    font-weight: bold;
-    font-size: 16px;
-}
-
-.popup-header .tabs {
-    flex: 1;
-    display: flex;
-    justify-content: center;
     gap: 8px;
 }
 
-.popup-header .tabs .tab {
+/* ===== Tabs (header nav) ===== */
+.tabs{
+    display: flex;
+    gap: 6px;
+    padding: 4px;
+    background: var(--soft);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+}
+.tab{
+    appearance: none;
+    border: 0;
     background: transparent;
-    border: none;
-    padding: 6px 12px;
+    color: var(--muted);
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-weight: 600;
     cursor: pointer;
-    border-radius: 4px;
-    font-size: 14px;
+    transition: all .18s ease;
+}
+.tab:hover{ color: var(--fg); }
+.tab.active{
+    color: #fff;
+    background: linear-gradient(135deg, var(--brand), var(--brand-2));
+    box-shadow: var(--shadow);
 }
 
-.popup-header .tabs .tab.active {
-    background: #e60023; /* Pinterest Red */
-    color: white;
-    font-weight: bold;
-}
-
-.popup-header .tabs .tab:hover {
-    background: #f9cdd5; /* 밝은 레드톤 hover */
-}
-
-.popup-header .actions {
+/* ===== Header actions ===== */
+.actions{
     display: flex;
     align-items: center;
+    gap: 8px;
+}
+.upgrade{
+    border: 0;
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, var(--brand), var(--brand-2));
+    cursor: pointer;
+    transition: transform .12s ease, box-shadow .18s ease;
+    box-shadow: var(--shadow);
+}
+.upgrade:hover{ transform: translateY(-1px); }
+
+.close-btn{
+    appearance: none;
+    border: 1px solid var(--border);
+    background: var(--soft);
+    color: var(--fg);
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition: background .15s ease, transform .1s ease;
+}
+.close-btn:hover{ background: rgba(127,127,127,.12); }
+.close-btn:active{ transform: scale(.96); }
+
+/* ===== Main ===== */
+.popup-content{
+    padding: 16px;
+}
+
+/* Tab content visibility (JS로 .active 토글) */
+.tab-content{ display: none; }
+.tab-content.active{ display: block; }
+
+/* Section titles */
+.tab-content h2{
+    margin: 0 0 12px;
+    font-size: 18px;
+}
+
+/* ===== Board Section ===== */
+#board > div{
+    display: grid;
+    align-items: start;
+    gap: 12px;
+    max-width: 1100px;
+}
+
+/* Board title + actions */
+#board h1{
+    margin: 0;
+    font-size: 20px;
+    letter-spacing: .2px;
+}
+
+#btn-getImageList{
+    width: max-content;
+    border: 1px solid var(--border);
+    background: var(--soft);
+    color: var(--fg);
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-weight: 600;
+    transition: background .15s ease, transform .1s ease, border-color .15s ease;
+}
+#btn-getImageList:hover{
+    background: rgba(127,127,127,.12);
+    border-color: rgba(127,127,127,.35);
+}
+#btn-getImageList:active{ transform: translateY(1px); }
+
+/* Status text */
+#status{
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+/* 컬럼(메이슨리 유사) */
+#pin-list{
+    column-count: 4;         /* 화면 폭에 맞게 조절 (미디어쿼리로 2~6 사이) */
+    column-gap: 12px;
+}
+@media (max-width: 1200px){ #pin-list { column-count: 3; } }
+@media (max-width: 800px) { #pin-list { column-count: 2; } }
+@media (max-width: 520px) { #pin-list { column-count: 1; } }
+
+
+/* 카드가 컬럼에서 쪼개지지 않게 */
+#pin-list .pin{
+    break-inside: avoid;
+    margin: 0 0 12px;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 12px;
+    background: var(--soft, #fafafa);
+    overflow: hidden;
+}
+#pin-list .pin:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 8px 26px rgba(0,0,0,.12);
+}
+
+
+/* 이미지: 절대 크롭 금지 */
+#pin-list .pin img{
+    display: block;
+    width: 100%;
+    height: auto;            /* ← 원본 비율 유지 */
+    /* aspect-ratio 없음! object-fit도 필요 없음 */
+}
+
+/* Pin info (선택적으로 사용할 수 있는 영역) */
+#pin-list .meta{
+    padding: 8px 10px;
+    display: grid;
     gap: 6px;
 }
-
-.popup-header .actions .upgrade {
-    background: #e60023;
-    color: white;
-    border: none;
-    padding: 6px 10px;
-    border-radius: 4px;
+#pin-list .meta .title{
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--fg);
+    line-height: 1.35;
+}
+#pin-list .meta .sub{
     font-size: 12px;
-    cursor: pointer;
+    color: var(--muted);
 }
 
-.popup-header .actions .upgrade:hover {
-    background: #cc0020;
+/* ===== “Saved Pins” & “Settings” 섹션 기본 간격 ===== */
+#pins, #settings{
+    display: grid;
+    gap: 12px;
 }
 
-.popup-header .actions .close-btn {
-    background: none;
-    border: none;
-    font-size: 18px;
-    cursor: pointer;
-    color: #333;
+/* ===== Scrollbar (미세 커스텀) ===== */
+*{
+    scrollbar-width: thin;
+    scrollbar-color: rgba(125,125,125,.35) transparent;
 }
-
-.popup-header .actions .close-btn:hover {
-    color: #e60023;
+*::-webkit-scrollbar{ height: 10px; width: 10px; }
+*::-webkit-scrollbar-thumb{
+    background: rgba(125,125,125,.35);
+    border-radius: 999px;
 }
+*::-webkit-scrollbar-track{ background: transparent; }
 
-.popup-content {
-    flex: 1;
-    padding: 12px;
-    overflow-y: auto;
-}
-
-.tab-content {
-    display: none;
-}
-
-.tab-content.active {
-    display: block;
+/* ===== 작은 화면 대응 ===== */
+@media (max-width: 480px){
+    .popup-header{
+        grid-template-columns: 1fr auto;
+        grid-auto-rows: min-content;
+        gap: 8px;
+    }
+    .actions{ justify-self: end; }
+    .tabs{
+        grid-column: 1 / -1;
+        justify-content: center;
+    }
+    .popup-content{ padding: 12px; }
 }
