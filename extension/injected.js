@@ -76,13 +76,14 @@
      * @param {string} slug - 보드 slug
      */
     async function getBoardInfo(username, slug) {
-        // conso
+        console.log("getBoardInfo username,slug ",username,slug)
         // URL 세그먼트는 반드시 인코딩
         const safeUser = encodeURIComponent(username);
         const safeSlug = encodeURIComponent(slug);
 
         // 헤더에도 ASCII만 써야 하므로 인코딩된 경로 사용
         const encodedPath = `/${safeUser}/${safeSlug}/`;
+
 
         // 쿠키에서 csrftoken 추출 (없어도 동작하도록 방어)
         const csrftoken = document.cookie
@@ -157,13 +158,19 @@
 
     // 4. 보드 핀 긁기
     async function fetchBoardPins() {
-        const boardUrl = location.pathname;                                                 // "/duckduckduccoon/3-arcade/"
+        let boardUrl = location.pathname;                                                 // "/duckduckduccoon/3-arcade/"
+        console.log("boardUrl",boardUrl)
         const [userName, slug] = parsePinterestBoardSlug(boardUrl)
         // const [userName, slug] = boardUrl.split('/').filter(v => v !== '');    // ""
         if(!slug) {
             window.postMessage({ type: "SLUG_NOT_FOUND", pins }, "*");
             return
         }
+
+        const safeUser = encodeURIComponent(userName);
+        const safeSlug = encodeURIComponent(slug);
+        const safePath = `/${safeUser}/${safeSlug}/`;
+
 
         console.log("boardUrl",boardUrl)
         console.log("userName, slug", userName, slug)
@@ -188,7 +195,7 @@
             // ✅ Pinterest 프론트에서 실제로 넣는 옵션들 반영
             const options = {
                 board_id: boardId,
-                board_url: boardUrl,
+                board_url: safePath,
                 currentFilter: -1,
                 field_set_key: "react_grid_pin",
                 filter_section_pins: true,
@@ -201,7 +208,7 @@
 
             const url =
                 `${location.origin}/resource/BoardFeedResource/get/` +
-                `?source_url=${encodeURIComponent(boardUrl)}` +
+                `?source_url=${safePath}` +
                 `&data=${encodeURIComponent(JSON.stringify({ options, context: {} }))}`;
 
             // console.log(`[REQ page=${page}]`, url);
@@ -212,9 +219,12 @@
                     "accept": "application/json, text/javascript, */*; q=0.01",
                     "x-requested-with": "XMLHttpRequest",
                     "x-pinterest-appstate": "active",
-                    "x-pinterest-source-url": boardUrl,
-                    // 👇 slug 핸들러: /username/slug/ 형태
-                    "x-pinterest-pws-handler": `www/${userName}/${slug}.js`,
+                    // ✅ ASCII만: 인코딩된 경로 사용
+                    "x-pinterest-source-url": safePath,
+                    // ❌ 동적 값 넣지 마세요 (키릴 포함됨)
+                    // "x-pinterest-pws-handler": `www/${userName}/${slug}.js`,
+                    // ✅ 필요하면 아예 literal로 유지 (Pinterest가 실제로 이 값 파싱하진 않음)
+                    "x-pinterest-pws-handler": "www/[username]/[slug].js",
                 },
             });
 
