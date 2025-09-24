@@ -23,12 +23,13 @@ onAddChromeRuntimeMessage()
 /**
  * 이미지 데이터 Fetch
  */
-window.addEventListener('message', (e)=> {
-    if (e.data?.type === "PANEL_SCAN") {
-        console.log("[CS] 패널에서 스캔 요청 받음");
-        injectScriptFile("injected.js");
-    }
-})
+injectScriptFile("inject-any.js");
+// window.addEventListener('message', (e)=> {
+//     if (e.data?.type === "PANEL_SCAN") {
+//         console.log("[CS] 패널에서 스캔 요청 받음");
+//         injectScriptFile("inject-any.js");
+//     }
+// })
 
 
 function injectionScriptInit() {
@@ -39,10 +40,10 @@ function injectionScriptInit() {
         console.info("event ", event)
         if (event.source !== window) return;
         switch (event.data.type) {
-            // case "PANEL_SCAN":
-            //     console.log("[CS] 패널에서 스캔 요청 받음");
-            //     injectScriptFile("injected.js");
-            //     break;
+            case "PANEL_SCAN":
+                console.log("[CS] 패널에서 스캔 요청 받음");
+                injectScriptFile("inject-any.js");
+                break;
 
             case "PINS_COLLECTED":
                 chrome.runtime.sendMessage({
@@ -61,6 +62,7 @@ function injectionScriptInit() {
                 chrome.runtime.sendMessage({
                     type: "SLUG_NOT_FOUND",
                 });
+                break
 
             default:
                 break;
@@ -80,6 +82,10 @@ function onAddChromeRuntimeMessage() {
             case 'PANEL_CLOSE':     // 확장프로그램 종료
                 closePanel();
                 break
+            case "START_INJECT":
+                console.info("START_INJECT")
+                injectScriptFile('inject-auth.js')
+                break
             default:
                 break
         }
@@ -88,10 +94,30 @@ function onAddChromeRuntimeMessage() {
 
 // 페이지에 함수 주입
 function injectScriptFile(file) {
+    let old = null
+    if(file === 'inject-auth.js') {
+        old = document.querySelector(`script[data-inject-any="true"]`);
+    } else if(file === "inject-any.js") {
+        old = document.querySelector(`script[data-inject-auth="true"]`);
+    }
+
+    if (old) {
+        console.log("[CS] 이전 스크립트 제거", old);
+        old.remove();
+    }
+
     const script = document.createElement("script");
     script.src = chrome.runtime.getURL(file);
+
+    // 어떤 스크립트인지 마킹
+    if (file === "inject-auth.js") {
+        script.dataset.injectAuth = "true";
+    } else {
+        script.dataset.injectAny = "true";
+    }
+
     script.onload = () => {
-        console.log("[CS] injected.js 로드 완료");
+        console.log(`[CS] ${file}  로드 완료`);
         script.remove();
     };
     (document.head || document.documentElement).appendChild(script);

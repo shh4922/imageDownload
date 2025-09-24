@@ -11,8 +11,9 @@
 
   <nav class="tabs">
     <button class="tab active" data-target="board">Board</button>
-    <button class="tab" data-target="pins">Pins</button>
-    <button class="tab" data-target="settings">Settings</button>
+<!--    <button class="tab" data-target="pins">Pins</button>-->
+<!--    <button class="tab" data-target="settings">Settings</button>-->
+    <button class="tab" data-target="signin">Signin</button>
   </nav>
 
   <div class="actions">
@@ -34,16 +35,22 @@
     </div>
   </section>
 
-  <section id="pins" class="tab-content">
-    <h2>Saved Pins</h2>
-  </section>
+<!--  <section id="pins" class="tab-content">-->
+<!--    <h2>Saved Pins</h2>-->
+<!--  </section>-->
 
-  <section id="settings" class="tab-content">
-    <h2>Settings</h2>
-  </section>
+<!--  <section id="settings" class="tab-content">-->
+<!--    <h2>Settings</h2>-->
+<!--  </section>-->
 
   <section id="signin" class="tab-content">
-    <h2>sign in</h2>
+    <form id="signin-form">
+      <label>
+        Email:
+        <input type="email" id="signin-email" required />
+      </label>
+      <button type="submit">인증 요청</button>
+    </form>
   </section>
 </main>
 

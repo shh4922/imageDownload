@@ -74,6 +74,9 @@ function onAddRuntimeEvent() {
         const tabId = sender.tab?.id;
         if (!tabId) return;
 
+        const findTab = findTabByTabId(tabId)
+        if(!findTab) return
+
         switch (msg.type) {
             case "PINS_COLLECTED":
                 sendPinsData(tabId, msg.pins)
@@ -85,15 +88,23 @@ function onAddRuntimeEvent() {
                 sendPanelClose(tabId)
                 break
             case "SLUG_NOT_FOUND":
-                const findTab = findTabByTabId(tabId)
-                if(!findTab) return
+
                 findTab.port.sendMessage(tabId, { type: "SLUG_NOT_FOUND" })
+                break
+            case "START_INJECT":
+                console.info("findTab", findTab)
+                chrome.tabs.sendMessage(tabId, {
+                    type: "START_INJECT",
+                    email: msg.email
+                });
                 break
             default:
                 break
         }
     });
 }
+
+
 
 function sendPinsData(tabId, pins=[]) {
     const imageList = Array.isArray(pins) ? pins : [];

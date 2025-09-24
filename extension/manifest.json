@@ -27,6 +27,8 @@
         "panel/panel.css",
         "panel/panel.js",
         "injected.js",
+        "inject-any.js",
+        "inject-auth.js",
         "assets/*"
       ],
       "matches": ["https://*.pinterest.com/*", "https://*.pinterest.co.kr/*"]

@@ -9,11 +9,13 @@ const port = chrome.runtime.connect({ name: "panel" });
 let tabId = null
 
 // 2) DOM 참조
-const listEl = document.getElementById("pin-list");
-const statusEl = document.getElementById("status");
+const listEl = document.getElementById("pin-list");             // 리스트_이미지
+const statusEl = document.getElementById("status");             // 상태_로드
+const form = document.getElementById("signin-form");            // 폼_로그인
+const emailInput = document.getElementById("signin-email");     // 인풋_이메일
+const progEl = document.getElementById('prog');                 // ???
 
 
-const progEl = document.getElementById('prog');
 
 // 패널 최상단에서 1회만 생성해두면 좋아요
 // 1) 전역에 한 번
@@ -89,24 +91,10 @@ port.onMessage.addListener((msg) => {
     }
 });
 
-// function renderPins(pins) {
-//     listEl.innerHTML = "";
-//     pins.forEach((p) => {
-//         const url = typeof p === "string" ? p : p.url;
-//         const id  = typeof p === "string" ? "" : (p.id ?? "");
-//
-//         const img = document.createElement("img");
-//         img.src = url;
-//         img.alt = id;
-//         img.title = id || url;
-//         img.style.width = "150px";
-//         img.style.margin = "6px";
-//         img.style.borderRadius = "6px";
-//         img.style.border = "1px solid #ddd";
-//
-//         listEl.appendChild(img);
-//     });
-// }
+/**
+ * 로드된 이미지 리스트 렌더링
+ * @param pins
+ */
 function renderPins(pins) {
     listEl.innerHTML = "";
     const frag = document.createDocumentFragment();
@@ -136,8 +124,9 @@ function renderPins(pins) {
 
     listEl.appendChild(frag);
 }
-subscribeCurrentTab(); // 패널 열리면 자동 구독
 
+subscribeCurrentTab(); // 패널 열리면 자동 구독
+initSignIn()
 initNavBar()
 initCloseButton()
 initImageList()
@@ -204,4 +193,60 @@ function initImageList() {
         window.parent.postMessage({ type: "PANEL_SCAN" }, "*");
     })
 }
+
+
+/** API --------------------------------------------------------------------------------------------------------------------------------------------------*/
+async function signIn(email){
+    statusEl.textContent = "인증 메일 전송 중...";
+    try {
+        // 🔹 여기서 서버 API 호출 (예시: /api/auth/send-code)
+        // const res = await fetch("https://your-server.com/api/auth/send-code", {
+        //     method: "POST",
+        //     headers: { "Content-Type": "application/json" },
+        //     body: JSON.stringify({ email })
+        // });
+        //
+        // if (!res.ok) throw new Error(`status ${res.status}`);
+        // const json = await res.json();
+        console.info(email)
+        // if (json.ok) {
+        //     statusEl.textContent = `인증 메일을 ${email} 로 전송했습니다.`;
+        // } else {
+        //     statusEl.textContent = "인증 요청 실패: " + (json.error || "알 수 없는 오류");
+        // }
+        chrome.runtime.sendMessage({
+            type:"START_INJECT",
+            tabId,
+            email
+        })
+    } catch (err) {
+        console.error(err);
+        statusEl.textContent = "서버 오류: " + err.message;
+    }
+}
+
+function initSignIn() {
+    form.addEventListener("submit", (e)=>{
+        e.preventDefault();
+        const email = emailInput.value.trim();
+        if (!email) {
+            statusEl.textContent = "이메일을 입력하세요.";
+            return;
+        }
+        signIn(email)
+    });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
