@@ -11,19 +11,22 @@
  *
  */
 
+
+let currentInject = "inject-any.js"
+
 // 페이지 위에 패널을 꽂고, 그 자리에서 스캔/다운로드까지 수행
 if (!window.__filterest_injected) {
     window.__filterest_injected = true;
     mountIframePanel()
 }
 
-injectionScriptInit()
 
+initWindowEvent()
 onAddChromeRuntimeMessage()
 /**
  * 이미지 데이터 Fetch
  */
-injectScriptFile("inject-any.js");
+// injectScriptFile("inject-any.js");
 // window.addEventListener('message', (e)=> {
 //     if (e.data?.type === "PANEL_SCAN") {
 //         console.log("[CS] 패널에서 스캔 요청 받음");
@@ -32,18 +35,15 @@ injectScriptFile("inject-any.js");
 // })
 
 
-function injectionScriptInit() {
+function initWindowEvent() {
     /**
      * 이미지 데이터 Fetch
      */
     window.addEventListener('message', (event)=> {
-        console.info("event ", event)
+        console.info("[CS] event ", event)
         if (event.source !== window) return;
         switch (event.data.type) {
-            case "PANEL_SCAN":
-                console.log("[CS] 패널에서 스캔 요청 받음");
-                injectScriptFile("inject-any.js");
-                break;
+
 
             case "PINS_COLLECTED":
                 chrome.runtime.sendMessage({
@@ -71,7 +71,9 @@ function injectionScriptInit() {
 }
 
 
-//
+/**
+ * background.js 에서 받는 메시지에 대한 이벤트 등록
+ */
 function onAddChromeRuntimeMessage() {
     chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         switch (msg.type) {
@@ -84,15 +86,23 @@ function onAddChromeRuntimeMessage() {
                 break
             case "START_INJECT":
                 console.info("START_INJECT")
-                injectScriptFile('inject-auth.js')
+                // injectScriptFile('inject-auth.js')
+                currentInject = 'inject-auth.js'
                 break
+            case "PANEL_SCAN":
+                console.log("[CS] -[BG->CS] 스캔 요청 받음");
+                injectScriptFile(currentInject);
+                break;
             default:
                 break
         }
     });
 }
 
-// 페이지에 함수 주입
+/**
+ * 스크립트 주입 함수
+ * @param file
+ */
 function injectScriptFile(file) {
     let old = null
     if(file === 'inject-auth.js') {
@@ -108,6 +118,7 @@ function injectScriptFile(file) {
 
     const script = document.createElement("script");
     script.src = chrome.runtime.getURL(file);
+    currentInject = file
 
     // 어떤 스크립트인지 마킹
     if (file === "inject-auth.js") {
@@ -118,7 +129,7 @@ function injectScriptFile(file) {
 
     script.onload = () => {
         console.log(`[CS] ${file}  로드 완료`);
-        script.remove();
+        // script.remove();
     };
     (document.head || document.documentElement).appendChild(script);
 }

@@ -129,7 +129,7 @@ subscribeCurrentTab(); // 패널 열리면 자동 구독
 initSignIn()
 initNavBar()
 initCloseButton()
-initImageList()
+initEventScanImage()
 
 // initImagePanel()
 
@@ -186,11 +186,15 @@ function initCloseButton() {
 }
 
 
-function initImageList() {
+function initEventScanImage() {
     const getImageListButton = document.getElementById('btn-getImageList')
     if(!getImageListButton) return
+
     getImageListButton.addEventListener('click',()=>{
-        window.parent.postMessage({ type: "PANEL_SCAN" }, "*");
+        chrome.runtime.sendMessage({
+            type: "PANEL_SCAN",
+            tabId
+        })
     })
 }
 
@@ -208,12 +212,14 @@ async function signIn(email){
         //
         // if (!res.ok) throw new Error(`status ${res.status}`);
         // const json = await res.json();
-        console.info(email)
+
         // if (json.ok) {
         //     statusEl.textContent = `인증 메일을 ${email} 로 전송했습니다.`;
         // } else {
         //     statusEl.textContent = "인증 요청 실패: " + (json.error || "알 수 없는 오류");
         // }
+
+        console.info(email)
         chrome.runtime.sendMessage({
             type:"START_INJECT",
             tabId,

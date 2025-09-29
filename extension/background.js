@@ -69,37 +69,37 @@ function onConnect() {
  * contents.js 에서 수신한 메시지 panel.js로 전송
  */
 function onAddRuntimeEvent() {
+    const handlers = {
+        PINS_COLLECTED: (tabId, msg) => sendPinsData(tabId, msg.pins),
+
+        PINS_PROGRESS: (_tabId, _msg) => sendLoadingPercent(),
+
+        PANEL_CLOSE: (tabId, _msg) =>
+            chrome.tabs.sendMessage(tabId, { type: "PANEL_CLOSE" }),
+
+        SLUG_NOT_FOUND: (tabId, _msg, findTab) =>
+            findTab.port.sendMessage(tabId, { type: "SLUG_NOT_FOUND" }),
+
+        PANEL_SCAN: (tabId, _msg) =>
+            chrome.tabs.sendMessage(tabId, { type: "PANEL_SCAN" }),
+
+        START_INJECT: (tabId, msg) =>
+            chrome.tabs.sendMessage(tabId, {
+                type: "START_INJECT",
+                email: msg.email,
+            }),
+    };
+
     chrome.runtime.onMessage.addListener((msg, sender) => {
         console.log("onRecive in background",msg, sender)
-        const tabId = sender.tab?.id;
-        if (!tabId) return;
+        const tabId = msg.tabId
 
         const findTab = findTabByTabId(tabId)
         if(!findTab) return
 
-        switch (msg.type) {
-            case "PINS_COLLECTED":
-                sendPinsData(tabId, msg.pins)
-                break
-            case "PINS_PROGRESS":
-                sendLoadingPercent()
-                break
-            case "PANEL_CLOSE":
-                sendPanelClose(tabId)
-                break
-            case "SLUG_NOT_FOUND":
-
-                findTab.port.sendMessage(tabId, { type: "SLUG_NOT_FOUND" })
-                break
-            case "START_INJECT":
-                console.info("findTab", findTab)
-                chrome.tabs.sendMessage(tabId, {
-                    type: "START_INJECT",
-                    email: msg.email
-                });
-                break
-            default:
-                break
+        const handler = handlers[msg.type]
+        if(handler) {
+            handler(tabId,msg, findTab)
         }
     });
 }
@@ -128,12 +128,7 @@ function sendLoadingPercent(tabId) {
     });
 }
 
-// contents.js로 이벤트 전달
-function sendPanelClose(tabId) {
-    // const findTab = findTabByTabId(tabId)
-    // if(!findTab) return
-    chrome.tabs.sendMessage(tabId, { type: "PANEL_CLOSE" })
-}
+
 
 function findTabByTabId(tabId) {
     const findTab = panelPorts.find((port)=>{
