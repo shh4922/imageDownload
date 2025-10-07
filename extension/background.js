@@ -1,63 +1,41 @@
 // background.js
 
-// 특정 브라우저 탭에 로드된 이미지 데이터.
-const pinsByTab = new Map(); // tabId -> [{id,url}, ...]
+const pinsByTab = new Map();        // tabId -> pins[]
+const panelPorts = [];              // { port, tabId }
 
-// 연결된 panel 포트 목록 (여러 개 열릴 수도 있음)
-const panelPorts = []; // [{ port, tabId }]
+onConnect();
+onAddRuntimeEvent();
+initExtension();
 
-
-onConnect()
-onAddRuntimeEvent()
-initExtension()
-
-
-
-
-
-/**
- * 확장 프로그램 on/off
- * 확장 프로그램 실행버튼을 눌렀을때 이벤트
- */
+/** 브라우저 액션 클릭 → 패널 토글 */
 function initExtension() {
     chrome.action.onClicked.addListener((tab) => {
-        console.log("background Action run!!")
         if (!tab?.id) return;
         chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_PANEL' }, (res) => {
             if (chrome.runtime.lastError) {
-                // 여기서 "Receiving end does not exist" 나오면 content script가 안 붙은 상태
                 console.warn('[BG] sendMessage error:', chrome.runtime.lastError.message);
-                return;
             }
-            console.log('[BG] toggle response:', res);
         });
     });
 }
 
-
-
-
-// panel.html 과의 포트 연결 관리
+/** panel.html 과 Port 연결 관리 */
 function onConnect() {
-
     chrome.runtime.onConnect.addListener((port) => {
-        if (port.name !== "panel") return;
-        console.log("onConnect", port)
-        const ctx = { port, tabId: null }; // 이 패널이 구독 중인 탭 id
+        if (port.name !== 'panel') return;
+
+        const ctx = { port, tabId: null };
         panelPorts.push(ctx);
 
-        // panel에서 특정 탭을 구독하겠다고 알림
         port.onMessage.addListener((msg) => {
-            if (msg.type === "PANEL_SUBSCRIBE" && typeof msg.tabId === "number") {
+            if (msg.type === 'PANEL_SUBSCRIBE' && typeof msg.tabId === 'number') {
                 ctx.tabId = msg.tabId;
 
-                // 기존에 로드했던 이미지데이터 있으면 로드
                 const cached = pinsByTab.get(ctx.tabId) || [];
-                port.postMessage({ type: "PINS_COLLECTED", pins: cached, tabId: ctx.tabId });
+                port.postMessage({ type: 'PINS_COLLECTED', pins: cached, tabId: ctx.tabId });
             }
         });
 
-        // 브라우저 탭 닫히면 연결 해제
         port.onDisconnect.addListener(() => {
             const i = panelPorts.indexOf(ctx);
             if (i >= 0) panelPorts.splice(i, 1);
@@ -65,75 +43,54 @@ function onConnect() {
     });
 }
 
-/**
- * contents.js 에서 수신한 메시지 panel.js로 전송
- */
+/** content.js / panel.js에서 오는 단발 메시지 처리 */
 function onAddRuntimeEvent() {
     const handlers = {
+        // ▶ content.js → panel 로 브로드캐스트
         PINS_COLLECTED: (tabId, msg) => sendPinsData(tabId, msg.pins),
+        PINS_PROGRESS:  (tabId, msg) => sendLoadingPercent(tabId, msg.percent),
+        SLUG_NOT_FOUND: (tabId)      => broadcastToPanel(tabId, { type: 'SLUG_NOT_FOUND', tabId }),
 
-        PINS_PROGRESS: (_tabId, _msg) => sendLoadingPercent(),
-
-        PANEL_CLOSE: (tabId, _msg) =>
-            chrome.tabs.sendMessage(tabId, { type: "PANEL_CLOSE" }),
-
-        SLUG_NOT_FOUND: (tabId, _msg, findTab) =>
-            findTab.port.sendMessage(tabId, { type: "SLUG_NOT_FOUND" }),
-
-        PANEL_SCAN: (tabId, _msg) =>
-            chrome.tabs.sendMessage(tabId, { type: "PANEL_SCAN" }),
-
-        START_INJECT: (tabId, msg) =>
-            chrome.tabs.sendMessage(tabId, {
-                type: "START_INJECT",
-                email: msg.email,
-            }),
+        // ▶ panel.js → 해당 탭의 content.js 로 릴레이 (panelPorts 없어도 전송)
+        PANEL_SCAN:   (tabId)        => chrome.tabs.sendMessage(tabId, { type: 'PANEL_SCAN' }),
+        START_INJECT: (tabId, msg)   => chrome.tabs.sendMessage(tabId, { type: 'START_INJECT', email: msg.email }),
+        PANEL_CLOSE:  (tabId)        => chrome.tabs.sendMessage(tabId, { type: 'PANEL_CLOSE' }),
     };
 
     chrome.runtime.onMessage.addListener((msg, sender) => {
-        console.log("onRecive in background",msg, sender)
-        const tabId = msg.tabId
+        // tabId 우선순위: msg.tabId(패널에서 지정) > sender.tab.id(컨텐트에서 옴)
+        const tabId = msg.tabId ?? sender.tab?.id;
+        if (!tabId) return;
 
-        const findTab = findTabByTabId(tabId)
-        if(!findTab) return
+        const handler = handlers[msg.type];
+        if (!handler) return;
 
-        const handler = handlers[msg.type]
-        if(handler) {
-            handler(tabId,msg, findTab)
+        try {
+            handler(tabId, msg);
+        } catch (e) {
+            console.error('[BG] handler error:', msg.type, e);
         }
     });
 }
 
-
-
-function sendPinsData(tabId, pins=[]) {
-    const imageList = Array.isArray(pins) ? pins : [];
-    pinsByTab.set(tabId, imageList); // 캐시 갱신
-
-    const findTab = findTabByTabId(tabId)
-    if(!findTab) return
-
-
-    findTab.port.postMessage({ type: "PINS_COLLECTED", pins:imageList, tabId });
+/** panel 포트로 브로드캐스트 */
+function broadcastToPanel(tabId, payload) {
+    panelPorts
+        .filter((p) => p.tabId === tabId)
+        .forEach((p) => p.port.postMessage(payload));
 }
 
-function sendLoadingPercent(tabId) {
-    // const findTab = findTabByTabId(tabId)
-    // if(!findTab) return
-
-    findTab.port.postMessage({
-        type: "PINS_PROGRESS",
-        percent: msg.percent,
-        tabId
-    });
+/** pins 캐시 업데이트 + 패널로 전달 */
+function sendPinsData(tabId, pins = []) {
+    const list = Array.isArray(pins) ? pins : [];
+    pinsByTab.set(tabId, list);
+    broadcastToPanel(tabId, { type: 'PINS_COLLECTED', pins: list, tabId });
 }
 
-
+function sendLoadingPercent(tabId, percent = 0) {
+    broadcastToPanel(tabId, { type: 'PINS_PROGRESS', percent, tabId });
+}
 
 function findTabByTabId(tabId) {
-    const findTab = panelPorts.find((port)=>{
-        return port.tabId === tabId
-    })
-    console.log(findTab)
-    return findTab
+    return panelPorts.find((p) => p.tabId === tabId) || null;
 }

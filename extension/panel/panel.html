@@ -25,12 +25,24 @@
 <!--  메인 콘텐츠  -->
 <main class="popup-content">
   <section id="board" class="tab-content active">
-    <h2>Board Images</h2>
+    <section id="board-detect" class="board-card hidden">
+      <div class="board-card__header">
+        <span class="ok">✅</span>
+        <span class="title">Board detected!</span>
+      </div>
+
+      <div class="board-card__body">
+        <div class="board-name" id="board-name">—</div>
+        <div class="board-meta">
+          <span id="board-pins">— pins</span>
+          <span class="hint" title="Pin count will update after scan">ⓘ</span>
+        </div>
+      </div>
+
+      <button id="btn-extract" class="as-link">Extract images from board</button>
+    </section>
+
     <div>
-      <h1>boardTitle</h1>
-      <button id="btn-getImageList">getBoardImageList</button>
-      <p id="status">안녕하세요</p>
-<!--      <progress id="prog" max="100" value="0" style="width: 240px;"></progress>-->
       <div id="pin-list"></div>
     </div>
   </section>

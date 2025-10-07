@@ -235,6 +235,7 @@
     const pins = await fetchBoardPins();
     console.log("[PAGE] 이미지 핀 개수:", pins.length);
 
+    // contents.js로 받은 이미지 전달
     window.postMessage({ type: "PINS_COLLECTED", pins }, "*");
     // return pins
 })();

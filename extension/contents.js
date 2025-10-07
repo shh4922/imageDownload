@@ -10,8 +10,6 @@
  *
  *
  */
-
-
 let currentInject = "inject-any.js"
 
 // 페이지 위에 패널을 꽂고, 그 자리에서 스캔/다운로드까지 수행
@@ -43,8 +41,6 @@ function initWindowEvent() {
         console.info("[CS] event ", event)
         if (event.source !== window) return;
         switch (event.data.type) {
-
-
             case "PINS_COLLECTED":
                 chrome.runtime.sendMessage({
                     type: "PINS_COLLECTED",
@@ -98,6 +94,8 @@ function onAddChromeRuntimeMessage() {
         }
     });
 }
+
+
 
 /**
  * 스크립트 주입 함수
