@@ -12,7 +12,6 @@
  */
 let currentInject = "inject-any.js"
 
-// 페이지 위에 패널을 꽂고, 그 자리에서 스캔/다운로드까지 수행
 if (!window.__filterest_injected) {
     window.__filterest_injected = true;
     mountIframePanel()
@@ -33,28 +32,32 @@ onAddChromeRuntimeMessage()
 // })
 
 
+/**
+ * windowMessage 이벤트
+ * 보통 inject 스크립트에서 보냄.
+ */
 function initWindowEvent() {
-    /**
-     * 이미지 데이터 Fetch
-     */
     window.addEventListener('message', (event)=> {
-        console.info("[CS] event ", event)
         if (event.source !== window) return;
+
         switch (event.data.type) {
-            case "PINS_COLLECTED":
+            case "PINS_COLLECTED":              // 이미지 GET 완료후
+                console.info("[CS] - PINS_COLLECTED", event)
                 chrome.runtime.sendMessage({
                     type: "PINS_COLLECTED",
                     pins: event.data.pins
                 });
                 break;
 
-            case "PINS_PROGRESS":
+            case "PINS_PROGRESS":               // 이미지 다운로드 중
+                console.info("[CS] - PINS_PROGRESS", event)
                 chrome.runtime.sendMessage({
                     type: "PINS_PROGRESS",
                     percent: event.data.percent
                 });
                 break
-            case "SLUG_NOT_FOUND":
+            case "SLUG_NOT_FOUND":              // 보드에 들어가지 않은경우
+                console.info("[CS] - SLUG_NOT_FOUND", event)
                 chrome.runtime.sendMessage({
                     type: "SLUG_NOT_FOUND",
                 });
@@ -80,19 +83,80 @@ function onAddChromeRuntimeMessage() {
             case 'PANEL_CLOSE':     // 확장프로그램 종료
                 closePanel();
                 break
-            case "START_INJECT":
-                console.info("START_INJECT")
-                // injectScriptFile('inject-auth.js')
+            case "START_INJECT":    // 로그인완료시, 스크립트파일 변경
                 currentInject = 'inject-auth.js'
                 break
-            case "PANEL_SCAN":
-                console.log("[CS] -[BG->CS] 스캔 요청 받음");
+            case "PANEL_SCAN":      // 스크립트 실행 요청
                 injectScriptFile(currentInject);
                 break;
+            case "GET_BOARD_META":  // 보드 정보를 로드
+                getBoardMeta()
+                    .then((data)=>{
+                        console.log("data",data)
+                        sendResponse({ ok: true, ...data })
+                    })
+                    .catch((err)=>{
+                        console.log("err", err)
+                        sendResponse({ ok: false, error: String(err) })
+                    })
+                return true // 이거 안쓰면 비동기 안기다리고 바로 리턴함.
             default:
                 break
         }
     });
+}
+async function getBoardMeta() {
+    // URL에서 username/slug 파싱
+    const info = parseBoardFromUrl(location.href);
+    if (!info) throw new Error('No board slug');
+    const { username, slug, safePath } = info;
+
+    // Pinterest BoardResource 호출 (pin_count, 이름 등)
+    const url = `${location.origin}/resource/BoardResource/get/?` +
+        `source_url=${encodeURIComponent(safePath)}` +
+        `&data=${encodeURIComponent(JSON.stringify({
+            options: { username, slug, field_set_key: "detailed" },
+            context: {}
+        }))}`;
+
+    const res = await fetch(url, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+            'accept': 'application/json, text/javascript, */*; q=0.01',
+            'x-requested-with': 'XMLHttpRequest',
+            'x-pinterest-appstate': 'active',
+            // ASCII만 사용 (키릴릭 등 비ASCII 금지)
+            'x-pinterest-source-url': safePath,
+            'x-pinterest-pws-handler': 'www/[username]/[slug].js',
+        }
+    });
+    if (!res.ok) throw new Error('BoardResource ' + res.status);
+    const json = await res.json();
+    const data = json?.resource_response?.data || {};
+    return {
+        username,
+        slug,
+        title: data?.name ?? slug,
+        pinCount: Number(data?.pin_count ?? 0)
+    };
+}
+
+function parseBoardFromUrl(raw) {
+    try {
+        const u = new URL(raw);
+        if (!/\.?pinterest\./i.test(u.hostname)) return null;
+        const seg = u.pathname.replace(/^\/|\/$/g, '').split('/');
+        if (seg.length < 2) return null;
+        const first = (seg[0] || '').toLowerCase();
+        if (first === 'pin' || first === 'ideas' || first === 'explore') return null;
+        const username = decodeURIComponent(seg[0]);
+        const slug     = decodeURIComponent(seg[1]);
+        const safeUser = encodeURIComponent(username);
+        const safeSlug = encodeURIComponent(slug);
+        const safePath = `/${safeUser}/${safeSlug}/`;
+        return { username, slug, safePath };
+    } catch { return null; }
 }
 
 
@@ -142,7 +206,9 @@ function togglePanel() {
     }
 }
 
-
+/**
+ * DOM 에 우리 서비스 UI 추가
+ */
 function mountIframePanel() {
     // 스크롤 잠금
     const prevOverflow = document.documentElement.style.overflow;
