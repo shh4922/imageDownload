@@ -24,13 +24,11 @@
 
 <!--  메인 콘텐츠  -->
 <main class="popup-content">
-  <section id="board" class="tab-content active">
-    <section id="board-detect" class="board-card hidden">
-      <div class="board-card__header">
-        <span class="ok">✅</span>
-        <span class="title">Board detected!</span>
-      </div>
 
+  <!-- board 컨텐츠 -->
+  <section id="board" class="tab-content active">
+    <!-- 보드 감지 전 -->
+    <section id="view-detect" class="board-card">
       <div class="board-card__body">
         <div class="board-name" id="board-name">—</div>
         <div class="board-meta">
@@ -38,23 +36,56 @@
           <span class="hint" title="Pin count will update after scan">ⓘ</span>
         </div>
       </div>
-
       <button id="btn-extract" class="as-link">Extract images from board</button>
     </section>
 
-    <div>
-      <div id="pin-list"></div>
-    </div>
+    <!-- 로딩 -->
+    <section id="view-loading" class="hidden">
+      <div class="loading">
+        <progress id="prog" max="100" value="0"></progress>
+        <p id="status">Scanning…</p>
+      </div>
+    </section>
+
+    <!-- 갤러리(이미지 로드 후) -->
+    <section id="view-gallery" class="hidden">
+      <!-- 상단 바(보드 정보/버튼들) -->
+      <div class="toolbar">
+        <div class="left">
+          <p>Board: <b id="board-title">—</b></p>
+        </div>
+        <div class="right">
+          <div class="tabs">
+            <button data-tab="all"   class="tab-btn active" id="tab-all">ALL IMAGES (<span id="count-all">0</span>)</button>
+            <button data-tab="sel"   class="tab-btn"        id="tab-sel">SELECTED (<span id="count-sel">0</span>)</button>
+          </div>
+          <div class="actions" id="actions-all">
+            <button id="btn-select-all">Select all</button>
+            <button id="btn-deselect-all">Deselect all</button>
+          </div>
+          <div class="actions hidden" id="actions-sel">
+            <button id="btn-deselect-all-2">Deselect all</button>
+          </div>
+          <button id="btn-download" class="primary">Download</button>
+        </div>
+      </div>
+
+      <!-- 진행 표시(다운로드 중에만 노출) -->
+      <div id="download-progress" class="hidden">
+        <progress id="dl-prog" max="100" value="0"></progress>
+        <p id="dl-status">Preparing…</p>
+      </div>
+
+      <!-- 그리드 -->
+      <div id="grid-all" class="grid"></div>
+      <div id="grid-sel" class="grid hidden"></div>
+    </section>
   </section>
 
-<!--  <section id="pins" class="tab-content">-->
-<!--    <h2>Saved Pins</h2>-->
-<!--  </section>-->
 
-<!--  <section id="settings" class="tab-content">-->
-<!--    <h2>Settings</h2>-->
-<!--  </section>-->
+  </section>
 
+  <!-- 인증  -->
   <section id="signin" class="tab-content">
     <form id="signin-form">
       <label>
@@ -66,7 +97,9 @@
   </section>
 </main>
 
-<script src="panel.js"></script>
+<!-- ✅ ES Modules 사용 -->
+<script type="module" src="panel.js"></script>
+<script src="../lib/jszip.min.js></script>
 
 
 </body>

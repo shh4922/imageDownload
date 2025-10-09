@@ -1,5 +1,5 @@
 (async function () {
-    console.log("[PAGE] injected.js 실행됨 → origin:", location.origin);
+    console.log("[PAGE] inject-auth  실행됨 → origin:", location.origin);
 
 
     function getCookie(name) {

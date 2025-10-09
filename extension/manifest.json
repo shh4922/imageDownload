@@ -26,7 +26,6 @@
         "panel/panel.html",
         "panel/panel.css",
         "panel/panel.js",
-        "injected.js",
         "inject-any.js",
         "inject-auth.js",
         "assets/*"
@@ -35,3 +34,4 @@
     }
   ]
 }
+

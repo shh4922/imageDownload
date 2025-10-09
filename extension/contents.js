@@ -4,7 +4,6 @@
 
 /**
  * window.addEventListener()
- * injected.js에서 이벤트 수신하거나, 보낼때 사용
  *
  * background.js 와 통신시, chrome.runtime.sendMessage()..
  *
