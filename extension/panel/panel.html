@@ -9,11 +9,11 @@
 <header class="popup-header">
   <div class="title">📌 Filterest</div>
 
-  <nav class="tabs">
-    <button class="tab active" data-target="board">Board</button>
+  <nav class="navbar">
+    <button class="tab active" data-target="nav-board">Board</button>
 <!--    <button class="tab" data-target="pins">Pins</button>-->
 <!--    <button class="tab" data-target="settings">Settings</button>-->
-    <button class="tab" data-target="signin">Signin</button>
+    <button class="tab" data-target="nav-signin">Signin</button>
   </nav>
 
   <div class="actions">
@@ -27,6 +27,7 @@
 
   <!-- board 컨텐츠 -->
   <section id="board" class="tab-content active">
+
     <!-- 보드 감지 전 -->
     <section id="view-detect" class="board-card">
       <div class="board-card__body">
@@ -49,15 +50,15 @@
 
     <!-- 갤러리(이미지 로드 후) -->
     <section id="view-gallery" class="hidden">
-      <!-- 상단 바(보드 정보/버튼들) -->
+      <!-- 상단 고정 툴바 -->
       <div class="toolbar">
         <div class="left">
           <p>Board: <b id="board-title">—</b></p>
         </div>
         <div class="right">
           <div class="tabs">
-            <button data-tab="all"   class="tab-btn active" id="tab-all">ALL IMAGES (<span id="count-all">0</span>)</button>
-            <button data-tab="sel"   class="tab-btn"        id="tab-sel">SELECTED (<span id="count-sel">0</span>)</button>
+            <button data-tab="all" class="tab-btn active" id="tab-all">ALL IMAGES (<span id="count-all">0</span>)</button>
+            <button data-tab="sel" class="tab-btn" id="tab-sel">SELECTED (<span id="count-sel">0</span>)</button>
           </div>
           <div class="actions" id="actions-all">
             <button id="btn-select-all">Select all</button>
@@ -66,24 +67,29 @@
           <div class="actions hidden" id="actions-sel">
             <button id="btn-deselect-all-2">Deselect all</button>
           </div>
-          <button id="btn-download" class="primary">Download</button>
         </div>
       </div>
 
-      <!-- 진행 표시(다운로드 중에만 노출) -->
-      <div id="download-progress" class="hidden">
-        <progress id="dl-prog" max="100" value="0"></progress>
-        <p id="dl-status">Preparing…</p>
+      <!-- 가운데: 이 영역만 스크롤 -->
+      <div class="gallery-scroll">
+        <div id="download-progress" class="hidden">
+          <progress id="dl-prog" max="100" value="0"></progress>
+          <p id="dl-status">Preparing…</p>
+        </div>
+
+        <div id="grid-all" class="grid"></div>
+        <div id="grid-sel" class="grid hidden"></div>
       </div>
 
-      <!-- 그리드 -->
-      <div id="grid-all" class="grid"></div>
-      <div id="grid-sel" class="grid hidden"></div>
+      <!-- 하단 고정 다운로드 바 -->
+      <div class="gallery-footer">
+        <button id="btn-download" class="primary">.zip Download</button>
+      </div>
     </section>
+
   </section>
 
 
-  </section>
 
   <!-- 인증  -->
   <section id="signin" class="tab-content">
@@ -95,6 +101,7 @@
       <button type="submit">인증 요청</button>
     </form>
   </section>
+
 </main>
 
 <!-- ✅ ES Modules 사용 -->

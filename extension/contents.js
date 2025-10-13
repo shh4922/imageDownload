@@ -245,8 +245,8 @@ function mountIframePanel() {
         position: 'fixed',
         top: '50%', left: '50%',
         transform: 'translate(-50%, -50%)',
-        width: '900px',   // 원하는 중앙 크기
-        height: '600px',
+        width: '1200px',       // 🔹 이전보다 조금 더 넓게
+        height: '900px',       // 🔹 4:3 비율 (1200:900)
         maxWidth: 'calc(100vw - 40px)',
         maxHeight: 'calc(100vh - 40px)',
         border: '0',

@@ -1,5 +1,10 @@
-// panel/dom.js
+// paneltadom.js
 export const el = {
+    // 상단 네브탭
+    navTabs:null,
+    sectionBoard:null,
+    sectionSignin:null,
+
     // sections
     viewDetect: null,
     viewLoading: null,
@@ -16,6 +21,7 @@ export const el = {
     status: null,
 
     // gallery toolbar
+    tabBtns:null,
     boardTitle: null,
     countAll: null,
     countSel: null,
@@ -50,6 +56,13 @@ export const el = {
 };
 
 export function initDomRefs() {
+    // 상단 네브바
+    el.navTabs   = document.querySelectorAll('.navbar .tab');   // Board / Signin
+    el.sectionBoard = document.getElementById('board')
+    el.sectionSignin = document.getElementById('signin')
+
+    el.tabBtns   = document.querySelectorAll('.toolbar .tab-btn'); // ALL / SELECTED
+
     // sections
     el.viewDetect = document.getElementById('view-detect');
     el.viewLoading = document.getElementById('view-loading');

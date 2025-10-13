@@ -1,27 +1,23 @@
+/* =========================
+   Filterest Panel — Full CSS
+   (navbar/top fixed, toolbar fixed, footer fixed, grid scroll only)
+   ========================= */
 
-/* ===== Reset & Base ===== */
+/* ---- Design Tokens ---- */
 * { box-sizing: border-box; }
-html, body {
-    margin: 0;
-    padding: 0;
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, Arial, sans-serif;
-    color: #222;
-    background: #fff;
-}
 :root{
     --bg: #ffffff;
     --fg: #1f2937;
     --muted: #6b7280;
     --border: #e5e7eb;
     --soft: #f9fafb;
-    --brand: #ef4444;       /* 포인트 색상 */
-    --brand-2: #fb7185;     /* 그라데이션용 */
-    --shadow: 0 4px 14px rgba(0,0,0,.08);
+    --brand: #ef4444;       /* primary */
+    --brand-2: #fb7185;     /* gradient */
+    --shadow: 0 6px 20px rgba(0,0,0,.08);
     --radius: 12px;
     --radius-sm: 8px;
     --gap: 12px;
 }
-
 @media (prefers-color-scheme: dark) {
     :root{
         --bg: #0b0f14;
@@ -29,16 +25,33 @@ html, body {
         --muted: #9ca3af;
         --border: #1f2937;
         --soft: #11161c;
-        --shadow: 0 6px 20px rgba(0,0,0,.35);
+        --shadow: 0 10px 28px rgba(0,0,0,.35);
     }
 }
-body { background: var(--bg); color: var(--fg); }
 
-/* ===== Header ===== */
+/* ---- Base ---- */
+html, body { height: 100%; }
+html, body {
+    margin: 0;
+    padding: 0;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, Arial, sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+}
+
+/* ---- Page Layout: header (sticky) + main (fills) ---- */
+body {
+    display: grid;
+    grid-template-rows: auto 1fr; /* header / content */
+}
+
+/* =========================
+   Header (Navbar)
+   ========================= */
 .popup-header{
     position: sticky;
     top: 0;
-    z-index: 10;
+    z-index: 1000;
     display: grid;
     grid-template-columns: 1fr auto auto;
     align-items: center;
@@ -48,7 +61,6 @@ body { background: var(--bg); color: var(--fg); }
     border-bottom: 1px solid var(--border);
     backdrop-filter: blur(6px);
 }
-
 .title{
     font-weight: 700;
     font-size: 16px;
@@ -58,8 +70,8 @@ body { background: var(--bg); color: var(--fg); }
     gap: 8px;
 }
 
-/* ===== Tabs (header nav) ===== */
-.tabs{
+/* Header nav tabs */
+.navbar{
     display: flex;
     gap: 6px;
     padding: 4px;
@@ -67,7 +79,7 @@ body { background: var(--bg); color: var(--fg); }
     border: 1px solid var(--border);
     border-radius: 999px;
 }
-.tab{
+.navbar .tab{
     appearance: none;
     border: 0;
     background: transparent;
@@ -78,227 +90,246 @@ body { background: var(--bg); color: var(--fg); }
     cursor: pointer;
     transition: all .18s ease;
 }
-.tab:hover{ color: var(--fg); }
-.tab.active{
+.navbar .tab:hover{ color: var(--fg); }
+.navbar .tab.active{
     color: #fff;
     background: linear-gradient(135deg, var(--brand), var(--brand-2));
     box-shadow: var(--shadow);
 }
 
-/* ===== Header actions ===== */
+/* Header actions */
 .actions{
     display: flex;
     align-items: center;
     gap: 8px;
 }
 .upgrade{
-    border: 0;
-    padding: 8px 12px;
-    border-radius: 999px;
-    font-weight: 700;
-    color: #fff;
+    border: 0; padding: 8px 12px; border-radius: 999px;
+    font-weight: 700; color: #fff;
     background: linear-gradient(135deg, var(--brand), var(--brand-2));
-    cursor: pointer;
+    cursor: pointer; box-shadow: var(--shadow);
     transition: transform .12s ease, box-shadow .18s ease;
-    box-shadow: var(--shadow);
 }
 .upgrade:hover{ transform: translateY(-1px); }
-
 .close-btn{
     appearance: none;
     border: 1px solid var(--border);
     background: var(--soft);
     color: var(--fg);
-    width: 34px;
-    height: 34px;
-    border-radius: 999px;
-    cursor: pointer;
-    display: grid;
-    place-items: center;
+    width: 34px; height: 34px;
+    border-radius: 999px; cursor: pointer;
+    display: grid; place-items: center;
     transition: background .15s ease, transform .1s ease;
 }
 .close-btn:hover{ background: rgba(127,127,127,.12); }
 .close-btn:active{ transform: scale(.96); }
 
-/* ===== Main ===== */
+/* =========================
+   Main container (no outer scroll)
+   ========================= */
 .popup-content{
+    height: 100%;
+    overflow: hidden; /* outer scroll OFF */
     padding: 16px;
 }
 
-/* Tab content visibility (JS로 .active 토글) */
-.tab-content{ display: none; }
+.hidden { display:none !important; }
+
+/* Tab content root switch */
+.tab-content{ display: none; height: 100%; }
 .tab-content.active{ display: block; }
 
-/* Section titles */
-.tab-content h2{
-    margin: 0 0 12px;
-    font-size: 18px;
-}
-
-/* ===== Board Section ===== */
-#board > div{
-    display: grid;
-    align-items: start;
+/* =========================
+   Board (root section)
+   ========================= */
+#board.tab-content.active {
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* fill available */
     gap: 12px;
-    max-width: 1100px;
 }
 
-/* Board title + actions */
-#board h1{
-    margin: 0;
-    font-size: 20px;
-    letter-spacing: .2px;
+/* ---- Detect Card (Board found / not found) ---- */
+.board-card {
+    background: var(--bg);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.06);
+    border: 1px solid var(--border);
+}
+.board-card__body {
+    margin-top: 4px;
+    padding: 18px;
+    border: 2px solid #e7e9ee;
+    border-radius: 16px;
+}
+.board-name { font-size: 28px; font-weight: 800; letter-spacing:.2px; }
+.board-meta { margin-top: 8px; display:flex; align-items:center; gap:8px; color:#8a90a2; }
+.board-meta .hint { cursor: help; }
+#btn-extract.as-link {
+    display:block; width:100%; text-align:center; background:none; border:none;
+    color: #e14b47; font-weight:700; margin-top:16px; font-size:18px; cursor:pointer;
+}
+#btn-extract.as-link:disabled { opacity:.5; cursor:not-allowed; }
+.board-card.inactive {
+    opacity: .9; background: #fafafa; border-color: #ddd;
+}
+.board-card.inactive .board-name {
+    color: #888; font-size: 20px; font-weight: 600; text-align: center;
+}
+.board-card.inactive .board-meta,
+.board-card.inactive #btn-extract { display: none; }
+
+/* ---- Loading view ---- */
+#view-loading .loading{
+    display:flex; gap:8px; align-items:center;
+}
+#prog{ width: 180px; }
+#status{ margin: 0; color: var(--muted); font-size: 13px; }
+
+/* =========================
+   Gallery (Toolbar fixed + Grid scroll + Footer fixed)
+   ========================= */
+#view-gallery{
+    display: grid;
+    grid-template-rows: auto 1fr auto; /* toolbar / scroll / footer */
+    height: 100%;
+    gap: 0;
 }
 
-#btn-getImageList{
-    width: max-content;
+/* Top toolbar (fixed-like) */
+.toolbar{
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 12px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    column-gap: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.04);
+}
+.toolbar .left p{ margin:0; }
+.toolbar .right{
+    display:flex; align-items:center; gap: 10px; flex-wrap: wrap;
+}
+
+/* Inner tabs (ALL / SELECTED) */
+.toolbar .tabs { display:flex; gap:6px; }
+.tab-btn{
     border: 1px solid var(--border);
     background: var(--soft);
     color: var(--fg);
-    padding: 8px 12px;
-    border-radius: var(--radius-sm);
+    padding: 6px 10px;
+    border-radius: 999px;
     cursor: pointer;
     font-weight: 600;
-    transition: background .15s ease, transform .1s ease, border-color .15s ease;
 }
-#btn-getImageList:hover{
-    background: rgba(127,127,127,.12);
-    border-color: rgba(127,127,127,.35);
-}
-#btn-getImageList:active{ transform: translateY(1px); }
+.tab-btn.active { border-color: var(--brand); color: var(--brand); }
 
-/* Status text */
-#status{
-    margin: 0;
-    color: var(--muted);
-    font-size: 13px;
+/* Toolbar actions */
+.toolbar .actions { display:flex; gap: 8px; }
+.toolbar .actions.hidden { display:none; }
+
+.primary{
+    border: 0; padding: 8px 12px; border-radius: 999px;
+    font-weight: 700; color: #fff;
+    background: linear-gradient(135deg, var(--brand), var(--brand-2));
+    cursor: pointer; box-shadow: var(--shadow);
 }
 
-/* 컬럼(메이슨리 유사) */
+/* Middle: scroll container (ONLY this scrolls) */
+.gallery-scroll{
+    min-height: 0; /* grid child scroll fix */
+    overflow: auto; /* scroll ON */
+    padding: 12px;
+    padding-top: 10px;
+}
+
+/* Optional in-scroll progress */
+#download-progress{
+    display:flex; gap:8px; align-items:center;
+    margin-bottom: 10px;
+}
+
+/* Bottom footer (fixed-like) */
+.gallery-footer{
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    padding: 10px 12px;
+    display:flex; justify-content:flex-end; gap:8px;
+    box-shadow: 0 -2px 6px rgba(0,0,0,.04);
+}
+
+/* ---- Masonry-style column list (legacy pin-list) ---- */
 #pin-list{
-    column-count: 4;         /* 화면 폭에 맞게 조절 (미디어쿼리로 2~6 사이) */
+    column-count: 4;
     column-gap: 12px;
 }
-
-#btn-getImageList.disabled,
-#btn-getImageList:disabled {
-    opacity: .5;
-    cursor: not-allowed;
-}
-
-
-.board-card {
-    background: #fff; border-radius: 16px; padding: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,.06);
-    border: 1px solid #eee; margin: 16px 0;
-}
-.board-card.hidden { display:none; }
-
-.board-card__header { display:flex; align-items:center; gap:8px; color:#0a7c2e; font-weight:700; }
-.board-card__header .title { color:#0a7c2e; }
-
-.board-card__body {
-    margin-top: 14px; padding: 18px; border: 2px solid #e7e9ee; border-radius: 16px;
-}
-.board-name { font-size: 28px; font-weight: 700; letter-spacing:.2px; }
-.board-meta { margin-top: 8px; display:flex; align-items:center; gap:8px; color:#8a90a2; }
-.board-meta .hint { cursor: help; }
-
-#btn-extract.as-link {
-    display:block; width:100%; text-align:center; background:none; border:none;
-    color:#e14b47; font-weight:700; margin-top:16px; font-size:18px; cursor:pointer;
-}
-#btn-extract.as-link:disabled { opacity:.5; cursor:not-allowed; }
-
-.board-card.inactive {
-    opacity: 0.8;
-    background: #fafafa;
-    border-color: #ddd;
-}
-
-.board-card.inactive .board-name {
-    color: #888;
-    font-size: 20px;
-    font-weight: 500;
-    text-align: center;
-}
-
-.board-card.inactive .board-meta,
-.board-card.inactive #btn-extract {
-    display: none;
-}
-
-/* 25.10.09 */
-.hidden { display:none !important; }
-.toolbar {
-    position: sticky;
-    top: 0;               /* 헤더가 있다면 그 높이만큼 보정 */
-    z-index: 1000;
-    background: #fff;     /* 아래 콘텐츠와 겹칠 때 대비 */
-    border-bottom: 1px solid #eee;
-    padding: 8px 12px;
-}
-.tabs { display:flex; gap:6px; }
-.tab-btn.active { font-weight:700; text-decoration:underline; }
-.grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:12px; }
-.card { position:relative; cursor:pointer; }
-.card img { width:100%; display:block; }
-.card .chk { position:absolute; top:6px; right:6px; background:#0008; color:#fff; padding:2px 6px; border-radius:6px; font-size:12px; }
-.loading, #download-progress { display:flex; gap:8px; align-items:center; }
-.primary { margin-left:8px; }
-
-@media (max-width: 1200px){ #pin-list { column-count: 3; } }
-@media (max-width: 800px) { #pin-list { column-count: 2; } }
-@media (max-width: 520px) { #pin-list { column-count: 1; } }
-
-
-/* 카드가 컬럼에서 쪼개지지 않게 */
 #pin-list .pin{
     break-inside: avoid;
     margin: 0 0 12px;
-    border: 1px solid var(--border, #e5e7eb);
+    border: 1px solid var(--border);
     border-radius: 12px;
-    background: var(--soft, #fafafa);
+    background: var(--soft);
     overflow: hidden;
+    transition: transform .15s ease, box-shadow .18s ease;
 }
 #pin-list .pin:hover{
     transform: translateY(-2px);
     box-shadow: 0 8px 26px rgba(0,0,0,.12);
 }
-
-
-/* 이미지: 절대 크롭 금지 */
 #pin-list .pin img{
-    display: block;
-    width: 100%;
-    height: auto;            /* ← 원본 비율 유지 */
-    /* aspect-ratio 없음! object-fit도 필요 없음 */
+    display: block; width: 100%; height: auto; /* keep aspect */
 }
 
-/* Pin info (선택적으로 사용할 수 있는 영역) */
-#pin-list .meta{
-    padding: 8px 10px;
+/* ---- Grid cards (new gallery) ---- */
+.grid {
     display: grid;
-    gap: 6px;
-}
-#pin-list .meta .title{
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--fg);
-    line-height: 1.35;
-}
-#pin-list .meta .sub{
-    font-size: 12px;
-    color: var(--muted);
-}
-
-/* ===== “Saved Pins” & “Settings” 섹션 기본 간격 ===== */
-#pins, #settings{
-    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px,1fr));
     gap: 12px;
 }
+.card {
+    position: relative;
+    cursor: pointer;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--soft);
+    border: 2px solid transparent;   /* 테두리 공간 확보 */
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,.1);
+}
+.card.selected {
+    border-color: #3b82f6; /* 파란색 (#60a5fa는 조금 더 밝음) */
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.35), 0 8px 24px rgba(59,130,246,0.25);
+    transform: scale(1.02);
+}
 
-/* ===== Scrollbar (미세 커스텀) ===== */
+.card img{ width: 100%; height: auto; display: block; }
+
+
+/* ---- Forms (signin) ---- */
+#signin .tab-content { height: 100%; }
+#signin form { display:grid; gap: 10px; }
+#signin input[type="email"]{
+    width: 100%; padding: 10px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--soft); color: var(--fg);
+}
+
+/* ---- Buttons general states ---- */
+button:disabled, .disabled{
+    opacity: .5; cursor: not-allowed;
+}
+
+/* ---- Scrollbar (subtle) ---- */
 *{
     scrollbar-width: thin;
     scrollbar-color: rgba(125,125,125,.35) transparent;
@@ -310,17 +341,15 @@ body { background: var(--bg); color: var(--fg); }
 }
 *::-webkit-scrollbar-track{ background: transparent; }
 
-/* ===== 작은 화면 대응 ===== */
-@media (max-width: 480px){
+/* ---- Responsive tweaks ---- */
+@media (max-width: 1200px){ #pin-list { column-count: 3; } }
+@media (max-width: 800px) { #pin-list { column-count: 2; } }
+@media (max-width: 520px) {
+    #pin-list { column-count: 1; }
     .popup-header{
-        grid-template-columns: 1fr auto;
-        grid-auto-rows: min-content;
-        gap: 8px;
+        grid-template-columns: 1fr auto; grid-auto-rows: min-content; gap: 8px;
     }
     .actions{ justify-self: end; }
-    .tabs{
-        grid-column: 1 / -1;
-        justify-content: center;
-    }
     .popup-content{ padding: 12px; }
+    .toolbar{ grid-template-columns: 1fr; row-gap: 8px; }
 }
