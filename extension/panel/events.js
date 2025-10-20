@@ -205,6 +205,12 @@ export function requestBoardMeta() {
             return;
         }
         if (!res || !res.ok) return;
+
+        // 보드 총 핀 개수를 상태에 저장
+        if (typeof res.pinCount === 'number') {
+            state.board.pinCount = Number(res.pinCount);
+        }
+
         showDetect(res.title || res.slug || state.board.slug || '—',
             typeof res.pinCount === 'number' ? `${res.pinCount} pins` : '— pins');
     });

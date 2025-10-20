@@ -252,15 +252,11 @@
                 }
             }
 
-            // 진행률 계산 (0~100 정수), pinCount > 0 인지 체크
-            const percent = pinCount > 0 ? Math.round((pins / pinCount) * 100) : 0;
 
-// 안전하게 0~100로 클램프(선택)
-            const safePercent = Math.min(100, Math.max(0, percent));
+            // progress
+            const pct = pinCount > 0 ? Math.round((pins.length / pinCount) * 100) : 0;
+            window.postMessage({ type: "PINS_PROGRESS", percent: Math.min(100, Math.max(0, pct)) }, "*");
 
-            window.postMessage({ type: "PINS_PROGRESS", percent: safePercent }, "*");
-
-            // console.log(`[PAGE] 누적 pins=${pins.length}`);
 
             // 다음 페이지 bookmark 확인
             const nextBookmark = json?.resource?.options?.bookmarks?.[0];
@@ -273,19 +269,6 @@
         return pins;
     }
 
-    // 5. 실행 흐름
-    // const ok = await ensureActiveSession();
-    // if (!ok) {
-    //     console.warn("[PAGE] 세션 활성화 실패 → 핀 조회 중단");
-    //     return;
-    // }
-
-    // const boardUrl = location.pathname;                                                 // "/duckduckduccoon/3-arcade/"
-    // const [userName, slug] = boardUrl.split('/').filter(v => v !== '');    // ""
-    // if(!slug) {
-    //     window.postMessage({ type: "SLUG_NOT_FOUND", pins }, "*");
-    //     return
-    // }
 
     const pins = await fetchBoardPins();
     console.log("[PAGE] 이미지 핀 개수:", pins.length);

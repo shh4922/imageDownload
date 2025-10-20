@@ -48,14 +48,24 @@ export function startDownload() {
     }
     setView('downloading');
     if (el.dlProg) el.dlProg.value = 0;
-    if (el.dlStatus) el.dlStatus.textContent = `Downloading 0 / ${state.selectedIds.size}`;
+    if (el.dlStatus) {
+        // 총 다운로드 대상(선택된 개수) 표시 + 전체 보드 기준 퍼센트는 DL_PROGRESS에서 갱신
+        el.dlStatus.textContent = `Downloading 0 / ${state.selectedIds.size}`;
+    }
     state.port?.postMessage({ type: 'START_DOWNLOAD', ids: Array.from(state.selectedIds) });
 }
 
 export function onDownloadProgress(done, total) {
-    const pct = total ? Math.round((done / total) * 100) : 0;
+    // 보드 전체 핀 수가 있으면 그것을 기준으로 퍼센트 계산
+    const boardTotal = Number(state.board?.pinCount) || 0;
+    const denom = boardTotal || total || 1;
+    const pct = denom ? Math.round((done / denom) * 100) : 0;
+
     if (el.dlProg) el.dlProg.value = pct;
-    if (el.dlStatus) el.dlStatus.textContent = `Downloading ${done} / ${total}${pct === 100 ? ' (완료)' : ''}`;
+    if (el.dlStatus) {
+        // 총 다운로드된 개수(done)과 선택된 총개수(total)도 함께 보여줌, 퍼센트는 보드 전체 기준
+        el.dlStatus.textContent = `Downloading ${done} / ${total} — ${pct}% of board${pct === 100 ? ' (완료)' : ''}`;
+    }
 }
 
 export function onDownloadDone() {
