@@ -4,6 +4,8 @@
   <meta charset="utf-8" />
   <title>Filterest Panel</title>
   <link rel="stylesheet" href="panel.css" />
+  <!-- PayPal SDK -->
+  <script src="https://www.paypal.com/sdk/js?client-id=AUHCFgRW81GY2iQjQmJF8tHWLjl0-TxGfCjjpmbpXs3AU9_8Ea3DjjiNqFGDoCg7_PkHLP4-wT6t6k9n&currency=USD"></script>
 </head>
 <body>
 <header class="popup-header">
@@ -18,6 +20,7 @@
 
   <div class="actions">
     <button class="upgrade">Upgrade to Pro</button>
+    <div id="paypal-button-container"></div>
     <button class="close-btn" title="Close" id="btn-close">✕</button>
   </div>
 </header>
@@ -41,10 +44,18 @@
     </section>
 
     <!-- 로딩 -->
-    <section id="view-loading" class="hidden">
-      <div class="loading">
-        <progress id="prog" max="100" value="0"></progress>
-        <p id="status">Scanning…</p>
+    <section id="view-loading" class="loading-view hidden">
+      <div class="loading-card">
+        <img src="./assets/loading.jpg" alt="Loading illustration" class="loading-illustration" />
+        <div class="loading-texts">
+          <h2>이미지를 불러오는 중입니다...</h2>
+          <p id="status">보드에서 핀을 수집하고 있어요. 잠시만 기다려 주세요.</p>
+        </div>
+
+        <div class="progress-container">
+          <progress id="prog" max="100" value="0"></progress>
+          <span id="percent-text">0%</span>
+        </div>
       </div>
     </section>
 

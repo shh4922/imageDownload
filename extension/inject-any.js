@@ -181,7 +181,7 @@
             filter_section_pins: true,
             sort: "default",
             layout: "default",
-            page_size: 5,
+            page_size: 15,
             redux_normalize_feed: true,
         };
 
@@ -213,7 +213,9 @@
         }
 
         // ✅ 진행률 (25개만이라 그냥 100%)
-        window.postMessage({ type: "PINS_PROGRESS", percent: 100 }, "*");
+        // progress
+        const pct = pinCount > 0 ? Math.round((pins.length / 15) * 100) : 0;
+        window.postMessage({ type: "PINS_PROGRESS", percent: Math.min(100, Math.max(0, pct)) }, "*");
 
         return pins;
     }

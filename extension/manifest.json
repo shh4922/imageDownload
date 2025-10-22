@@ -7,7 +7,9 @@
   "host_permissions": [
     "https://www.pinterest.com/*",
     "https://*.pinterest.com/*",
-    "https://*.pinimg.com/*"
+    "https://*.pinimg.com/*",
+    "https://www.paypal.com/*",
+    "https://*.paypal.com/*"
   ],
   "background": { "service_worker": "background.js" },
   "action": {},
@@ -19,6 +21,9 @@
       "run_at": "document_idle"
     }
   ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' https://www.paypal.com; object-src 'self'"
+  },
 
   "web_accessible_resources": [
     {

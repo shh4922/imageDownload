@@ -1,6 +1,5 @@
 /* =========================
-   Filterest Panel — Full CSS
-   (navbar/top fixed, toolbar fixed, footer fixed, grid scroll only)
+   Filterest Panel (Refined)
    ========================= */
 
 /* ---- Design Tokens ---- */
@@ -11,13 +10,12 @@
     --muted: #6b7280;
     --border: #e5e7eb;
     --soft: #f9fafb;
-    --brand: #ef4444;       /* primary */
-    --brand-2: #fb7185;     /* gradient */
+    --brand: #ef4444;
+    --brand-2: #fb7185;
     --shadow: 0 6px 20px rgba(0,0,0,.08);
     --radius: 12px;
-    --radius-sm: 8px;
-    --gap: 12px;
 }
+
 @media (prefers-color-scheme: dark) {
     :root{
         --bg: #0b0f14;
@@ -25,53 +23,52 @@
         --muted: #9ca3af;
         --border: #1f2937;
         --soft: #11161c;
-        --shadow: 0 10px 28px rgba(0,0,0,.35);
+        --shadow: 0 8px 26px rgba(0,0,0,.3);
     }
 }
 
 /* ---- Base ---- */
-html, body { height: 100%; }
 html, body {
+    height: 100%;
     margin: 0;
-    padding: 0;
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, Arial, sans-serif;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, sans-serif;
     color: var(--fg);
     background: var(--bg);
 }
 
-/* ---- Page Layout: header (sticky) + main (fills) ---- */
+/* Layout: header / main */
 body {
     display: grid;
-    grid-template-rows: auto 1fr; /* header / content */
+    grid-template-rows: auto 1fr;
 }
 
 /* =========================
-   Header (Navbar)
+   Header (sticky)
    ========================= */
-.popup-header{
+.popup-header {
     position: sticky;
     top: 0;
     z-index: 1000;
     display: grid;
     grid-template-columns: 1fr auto auto;
     align-items: center;
-    gap: var(--gap);
+    gap: 12px;
     padding: 12px 14px;
-    background: linear-gradient(180deg, rgba(0,0,0,0.04), transparent), var(--bg);
+    background: var(--bg);
     border-bottom: 1px solid var(--border);
     backdrop-filter: blur(6px);
 }
-.title{
+
+.title {
     font-weight: 700;
     font-size: 16px;
-    letter-spacing: .2px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 /* Header nav tabs */
-.navbar{
+.navbar {
     display: flex;
     gap: 6px;
     padding: 4px;
@@ -79,8 +76,8 @@ body {
     border: 1px solid var(--border);
     border-radius: 999px;
 }
-.navbar .tab{
-    appearance: none;
+
+.navbar .tab {
     border: 0;
     background: transparent;
     color: var(--muted);
@@ -90,137 +87,178 @@ body {
     cursor: pointer;
     transition: all .18s ease;
 }
-.navbar .tab:hover{ color: var(--fg); }
-.navbar .tab.active{
+.navbar .tab:hover { color: var(--fg); }
+.navbar .tab.active {
     color: #fff;
     background: linear-gradient(135deg, var(--brand), var(--brand-2));
     box-shadow: var(--shadow);
 }
 
 /* Header actions */
-.actions{
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.actions { display: flex; align-items: center; gap: 8px; }
+
+button, .primary {
+    border: none;
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .18s ease;
 }
-.upgrade{
-    border: 0; padding: 8px 12px; border-radius: 999px;
-    font-weight: 700; color: #fff;
+button:disabled { opacity: .5; cursor: not-allowed; }
+
+.primary {
     background: linear-gradient(135deg, var(--brand), var(--brand-2));
-    cursor: pointer; box-shadow: var(--shadow);
-    transition: transform .12s ease, box-shadow .18s ease;
+    color: #fff;
+    box-shadow: var(--shadow);
 }
-.upgrade:hover{ transform: translateY(-1px); }
-.close-btn{
-    appearance: none;
+.primary:hover { transform: translateY(-1px); }
+
+.close-btn {
     border: 1px solid var(--border);
     background: var(--soft);
-    color: var(--fg);
     width: 34px; height: 34px;
-    border-radius: 999px; cursor: pointer;
+    border-radius: 999px;
     display: grid; place-items: center;
-    transition: background .15s ease, transform .1s ease;
 }
-.close-btn:hover{ background: rgba(127,127,127,.12); }
-.close-btn:active{ transform: scale(.96); }
+.close-btn:hover { background: rgba(127,127,127,.12); }
 
 /* =========================
-   Main container (no outer scroll)
+   Main content
    ========================= */
-.popup-content{
+.popup-content {
     height: 100%;
-    overflow: hidden; /* outer scroll OFF */
+    overflow: hidden;
     padding: 16px;
 }
+.tab-content { display: none; height: 100%; }
+.tab-content.active { display: block; }
 
-.hidden { display:none !important; }
-
-/* Tab content root switch */
-.tab-content{ display: none; height: 100%; }
-.tab-content.active{ display: block; }
+.hidden { display: none !important; }
 
 /* =========================
-   Board (root section)
+   Board detect view
    ========================= */
-#board.tab-content.active {
-    display: flex;
-    flex-direction: column;
-    height: 100%; /* fill available */
-    gap: 12px;
-}
-
-/* ---- Detect Card (Board found / not found) ---- */
 .board-card {
     background: var(--bg);
+    border: 1px solid var(--border);
     border-radius: 16px;
     padding: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,.06);
-    border: 1px solid var(--border);
+    box-shadow: 0 4px 16px rgba(0,0,0,.05);
 }
 .board-card__body {
-    margin-top: 4px;
     padding: 18px;
     border: 2px solid #e7e9ee;
     border-radius: 16px;
 }
-.board-name { font-size: 28px; font-weight: 800; letter-spacing:.2px; }
-.board-meta { margin-top: 8px; display:flex; align-items:center; gap:8px; color:#8a90a2; }
-.board-meta .hint { cursor: help; }
+.board-name { font-size: 26px; font-weight: 800; }
+.board-meta {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #8a90a2;
+}
 #btn-extract.as-link {
-    display:block; width:100%; text-align:center; background:none; border:none;
-    color: #e14b47; font-weight:700; margin-top:16px; font-size:18px; cursor:pointer;
+    background: none;
+    border: none;
+    color: var(--brand);
+    font-weight: 700;
+    margin-top: 16px;
+    font-size: 18px;
+    cursor: pointer;
 }
-#btn-extract.as-link:disabled { opacity:.5; cursor:not-allowed; }
-.board-card.inactive {
-    opacity: .9; background: #fafafa; border-color: #ddd;
-}
-.board-card.inactive .board-name {
-    color: #888; font-size: 20px; font-weight: 600; text-align: center;
-}
-.board-card.inactive .board-meta,
-.board-card.inactive #btn-extract { display: none; }
-
-/* ---- Loading view ---- */
-#view-loading .loading{
-    display:flex; gap:8px; align-items:center;
-}
-#prog{ width: 180px; }
-#status{ margin: 0; color: var(--muted); font-size: 13px; }
+#btn-extract:disabled { opacity: .5; }
 
 /* =========================
-   Gallery (Toolbar fixed + Grid scroll + Footer fixed)
+   Loading view
    ========================= */
-#view-gallery{
-    display: grid;
-    grid-template-rows: auto 1fr auto; /* toolbar / scroll / footer */
+.loading-view {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     height: 100%;
-    gap: 0;
+    animation: fadeIn 0.4s ease forwards;
 }
 
-/* Top toolbar (fixed-like) */
-.toolbar{
+.loading-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    padding: 40px;
+    background: var(--soft);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    text-align: center;
+}
+
+.loading-illustration {
+    width: 240px;
+    height: auto;
+    border-radius: 14px;
+    animation: float 3s ease-in-out infinite;
+}
+
+.loading-texts h2 { margin: 0; font-size: 20px; }
+.loading-texts p { margin: 0; font-size: 14px; color: var(--muted); }
+
+.progress-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+progress {
+    width: 80%;
+    height: 10px;
+    border-radius: 999px;
+    overflow: hidden;
+    background-color: var(--border);
+}
+progress::-webkit-progress-bar { background-color: var(--border); }
+progress::-webkit-progress-value {
+    background: linear-gradient(90deg, var(--brand), var(--brand-2));
+    border-radius: 999px;
+    transition: width 0.3s ease;
+}
+#percent-text { font-weight: 600; color: var(--fg); }
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================
+   Gallery view
+   ========================= */
+#view-gallery {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    height: 100%;
+}
+
+/* Toolbar */
+.toolbar {
     position: sticky;
     top: 0;
-    z-index: 5;
     background: var(--bg);
     border-bottom: 1px solid var(--border);
     padding: 8px 12px;
-    display: grid;
-    grid-template-columns: 1fr auto;
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    column-gap: 12px;
     box-shadow: 0 2px 6px rgba(0,0,0,.04);
 }
-.toolbar .left p{ margin:0; }
-.toolbar .right{
-    display:flex; align-items:center; gap: 10px; flex-wrap: wrap;
-}
 
-/* Inner tabs (ALL / SELECTED) */
-.toolbar .tabs { display:flex; gap:6px; }
-.tab-btn{
-    border: 1px solid var(--border);
+.toolbar .tabs { display: flex; gap: 6px; }
+.tab-btn {
     background: var(--soft);
+    border: 1px solid var(--border);
     color: var(--fg);
     padding: 6px 10px;
     border-radius: 999px;
@@ -229,127 +267,85 @@ body {
 }
 .tab-btn.active { border-color: var(--brand); color: var(--brand); }
 
-/* Toolbar actions */
-.toolbar .actions { display:flex; gap: 8px; }
-.toolbar .actions.hidden { display:none; }
-
-.primary{
-    border: 0; padding: 8px 12px; border-radius: 999px;
-    font-weight: 700; color: #fff;
-    background: linear-gradient(135deg, var(--brand), var(--brand-2));
-    cursor: pointer; box-shadow: var(--shadow);
-}
-
-/* Middle: scroll container (ONLY this scrolls) */
-.gallery-scroll{
-    min-height: 0; /* grid child scroll fix */
-    overflow: auto; /* scroll ON */
+/* Scroll container */
+.gallery-scroll {
+    overflow: auto;
     padding: 12px;
-    padding-top: 10px;
 }
 
-/* Optional in-scroll progress */
-#download-progress{
-    display:flex; gap:8px; align-items:center;
-    margin-bottom: 10px;
-}
-
-/* Bottom footer (fixed-like) */
-.gallery-footer{
+/* Footer */
+.gallery-footer {
     position: sticky;
     bottom: 0;
-    z-index: 5;
     background: var(--bg);
     border-top: 1px solid var(--border);
     padding: 10px 12px;
-    display:flex; justify-content:flex-end; gap:8px;
+    display: flex;
+    justify-content: flex-end;
     box-shadow: 0 -2px 6px rgba(0,0,0,.04);
 }
 
-/* ---- Masonry-style column list (legacy pin-list) ---- */
-#pin-list{
-    column-count: 4;
-    column-gap: 12px;
-}
-#pin-list .pin{
-    break-inside: avoid;
-    margin: 0 0 12px;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    background: var(--soft);
-    overflow: hidden;
-    transition: transform .15s ease, box-shadow .18s ease;
-}
-#pin-list .pin:hover{
-    transform: translateY(-2px);
-    box-shadow: 0 8px 26px rgba(0,0,0,.12);
-}
-#pin-list .pin img{
-    display: block; width: 100%; height: auto; /* keep aspect */
-}
-
-/* ---- Grid cards (new gallery) ---- */
+/* Grid */
 .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px,1fr));
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 12px;
 }
 .card {
     position: relative;
-    cursor: pointer;
     border-radius: 10px;
     overflow: hidden;
     background: var(--soft);
-    border: 2px solid transparent;   /* 테두리 공간 확보 */
-    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+    border: 2px solid transparent;
+    transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+    cursor: pointer;
 }
 .card:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(0,0,0,.1);
 }
 .card.selected {
-    border-color: #3b82f6; /* 파란색 (#60a5fa는 조금 더 밝음) */
-    box-shadow: 0 0 0 3px rgba(59,130,246,0.35), 0 8px 24px rgba(59,130,246,0.25);
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.35);
     transform: scale(1.02);
 }
+.card img { width: 100%; height: auto; display: block; }
 
-.card img{ width: 100%; height: auto; display: block; }
-
-
-/* ---- Forms (signin) ---- */
-#signin .tab-content { height: 100%; }
-#signin form { display:grid; gap: 10px; }
-#signin input[type="email"]{
-    width: 100%; padding: 10px; border-radius: 8px;
-    border: 1px solid var(--border); background: var(--soft); color: var(--fg);
+/* =========================
+   Signin
+   ========================= */
+#signin form {
+    display: grid;
+    gap: 10px;
+}
+#signin input[type="email"] {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--soft);
+    color: var(--fg);
 }
 
-/* ---- Buttons general states ---- */
-button:disabled, .disabled{
-    opacity: .5; cursor: not-allowed;
-}
-
-/* ---- Scrollbar (subtle) ---- */
-*{
+/* =========================
+   Scrollbar (minimal)
+   ========================= */
+* {
     scrollbar-width: thin;
     scrollbar-color: rgba(125,125,125,.35) transparent;
 }
-*::-webkit-scrollbar{ height: 10px; width: 10px; }
-*::-webkit-scrollbar-thumb{
+*::-webkit-scrollbar { height: 10px; width: 10px; }
+*::-webkit-scrollbar-thumb {
     background: rgba(125,125,125,.35);
     border-radius: 999px;
 }
-*::-webkit-scrollbar-track{ background: transparent; }
+*::-webkit-scrollbar-track { background: transparent; }
 
-/* ---- Responsive tweaks ---- */
-@media (max-width: 1200px){ #pin-list { column-count: 3; } }
-@media (max-width: 800px) { #pin-list { column-count: 2; } }
-@media (max-width: 520px) {
-    #pin-list { column-count: 1; }
-    .popup-header{
-        grid-template-columns: 1fr auto; grid-auto-rows: min-content; gap: 8px;
-    }
-    .actions{ justify-self: end; }
-    .popup-content{ padding: 12px; }
-    .toolbar{ grid-template-columns: 1fr; row-gap: 8px; }
+/* =========================
+   Responsive tweaks
+   ========================= */
+@media (max-width: 600px) {
+    .popup-header { grid-template-columns: 1fr auto; gap: 8px; }
+    .popup-content { padding: 12px; }
+    .toolbar { flex-direction: column; align-items: flex-start; gap: 8px; }
 }
